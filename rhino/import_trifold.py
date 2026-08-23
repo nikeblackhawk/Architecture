@@ -1,10 +1,12 @@
 """
-Trifold -> Rhino importer  (schema trifold.school.v2)
-=====================================================
+Trifold -> Rhino importer  (schema trifold.school.v2.1)
+========================================================
 Run inside Rhino:  _-RunPythonScript  and pick this file.
 
 Builds, on a named layer tree:
-    Trifold::L0::Exterior Wall      the plate rectangle at true elevation and rotation
+    Trifold::L0::Exterior Wall      the plate outline at true elevation and rotation — a
+                                    rectilinear polyline that steps locally where a room
+                                    has pushed or pulled an edge, not always a rectangle
     Trifold::L0::Courtyard          the courtyard rectangle
     Trifold::L0::Plate              planar surface, courtyard trimmed out
     Trifold::L0::Rooms::<TYPE>      one closed rectangle per room, coloured by program

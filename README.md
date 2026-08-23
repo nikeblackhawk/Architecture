@@ -2,9 +2,10 @@
 
 A single-file, dependency-free tool for programming a three-storey elementary school on one
 rectangular floor plate that rotates 40° at every level. Drop rooms on the plate, drag them
-where you want them, and the plate answers: push a room past an edge and that whole edge builds
-out, so the footprint stays a rectangle and the dimensions stay buildable. Everything is in feet
-and square feet. When the massing holds up, export it to Rhino and Grasshopper.
+where you want them, and the plate answers *locally*: push a room past an edge and just that
+stretch of wall steps out to meet it — pull a room back and that stretch steps back in — while
+the rest of the edge stays put. Everything is in feet and square feet. When the massing holds
+up, export it to Rhino and Grasshopper.
 
 Open `index.html` in a browser. No build step, no server, no network.
 
@@ -19,19 +20,26 @@ around the courtyard instead of being shoved somewhere a moment later. Rooms are
 overlap each other; the overlap is drawn in red and totalled in the metrics, because resolving it
 is a design decision, not the tool's.
 
-**The wall builds out, it does not warp.** A room pressing past an edge moves that whole edge
-outward, up to the limit you set. The plate stays a rectangle; the Plate panel shows the
-build-out on each of the four edges; the metrics show the resulting dimensions. At the limit the
-room stops instead — nothing jumps, nothing oscillates. Switch it off for a fixed envelope, and
-any room now outside is flagged rather than moved.
+**The wall steps to fit, edge by edge, room by room.** Each of the four edges is its own
+skyline: at every point along it, the wall sits wherever the outward-most room reaches — bulging
+out to meet a room that presses past the base line, and pulling back in wherever nothing is
+there to hold it out, down to the limit you set. A room in the middle of an edge only ever moves
+*that stretch*; the rest is untouched. The result is a rectilinear, stepped outline — always a
+closed, buildable polygon with square corners, never a rectangle inflated as a whole or a curve.
+The Plate panel's N/E/S/W readout shows each edge's most extreme point (bulge or recede); the
+metrics show the resulting bounding size. At the limit a stretch simply stops moving — nothing
+jumps, nothing oscillates. Switch build-out off for a fixed rectangular envelope, and any room
+now outside is flagged rather than moved.
 
 ---
 
 ## The rotating stack
 
-Levels 1 and 2 are the same rectangle rotated about the courtyard centre. The dashed blue outline
-is the footprint common to all three rotations — computed exactly as the intersection of the
-three rectangles — and it is the only place a stair, lift or riser can run straight up.
+Levels 1 and 2 are the same base rectangle rotated about the courtyard centre — each then
+stepped out or in by its own program, so the three actual footprints are rectilinear outlines,
+not simple rectangles. The shaded field is the region common to all three rotations, sampled
+directly against each floor's real (stepped) outline — the only place a stair, lift or riser can
+run straight up.
 
 **Stack ×3** holds a room at one world point through all three rotations; drag it on any floor and
 the whole shaft follows. **Site cores in the shared zone** solves for core positions that minimise
@@ -91,10 +99,12 @@ Group E figure with sprinklers; 200 ft without. Set it to whatever your code req
 
 ## Rhino and Grasshopper
 
-**DXF** — R12, opens natively. Three plates, three courtyards and every room as closed rectangles
-at true elevation and rotation, on layers `L0_EXTERIOR_WALL`, `L0_COURTYARD`,
-`L0_ROOM_CLASSROOM`, `L1_…`. Rooms are plain rectangles, so ExtrudeCrv gives you room solids in
-one step.
+**DXF** — R12, opens natively. Three plates (each a closed, rectilinear polyline — not
+necessarily a 4-point rectangle, since it carries every local step), three courtyards, and every
+room as a closed rectangle, at true elevation and rotation, on layers `L0_EXTERIOR_WALL`,
+`L0_WALL_INNER_FACE`, `L0_COURTYARD`, `L0_ROOM_CLASSROOM`, `L1_…`. Rooms are plain rectangles, so
+ExtrudeCrv gives you room solids in one step; the plate polylines extrude the same way for walls
+and slabs.
 
 **JSON** — the whole parametric model:
 
@@ -102,10 +112,14 @@ one step.
 schema, generated, units, source
 parameters      plate W/D, courtyard W/D and offset, wall thickness, grid, module,
                 rotation step and centre, build-out limit, brief, travel limit
-basePlate       the rectangle and courtyard as drawn, before any build-out
-floors[]        index, name, elevation, rotationDeg, plateSize,
-                buildOut {north,east,south,west}, courtyardInset {…},
-                local  { plate, courtyard }          the floor's own upright frame
+basePlate       the rectangle and courtyard as drawn, before any room moved a wall
+floors[]        index, name, elevation, rotationDeg,
+                plateSize        the nominal base [W,D] you set
+                plateBBoxSize    the actual stepped outline's bounding [W,D]
+                buildOut {north,east,south,west}   each edge's most extreme point (± signed)
+                local  { plate, courtyard }         the floor's own upright frame — plate is
+                                                     the full stepped polygon, one point pair
+                                                     per structural bay that differs from base
                 world  { plate, courtyard }          rotated and lifted, ready for Rhino
                 rooms[]  name, type, department, area, length, width,
                          centreLocal, centreWorld, cornersLocal, cornersWorld,
@@ -184,9 +198,14 @@ assets/floorplate-sketch.jpg     the original hand sketch the first version trac
 
 ## Notes and limits
 
-- The default brief opens with the ground floor built out 15 ft on its north edge. That is the
+- The default brief opens with the ground floor's north edge stepped out where the gym and the
+  kindergartens need more than the base 220 ft depth, and stepped back in elsewhere. That is the
   tool telling you the truth: gym, cafeteria, kitchen and four kindergartens do not fit the same
-  rectangle as a floor of classrooms. Grow the plate, move program up, or let it build out.
+  rectangle as a floor of classrooms. Grow the plate, move program up, or let the wall keep
+  answering locally.
+- A bulge is always safe — it only ever adds area. A recede is bounded by the flex limit and by
+  the structural grid: the wall steps at grid lines, not at arbitrary room corners, so it reads
+  as a buildable stair-step rather than a comb of hairline notches.
 - A stacked core is a rectangle on each floor, and each floor's rectangle is rotated. The shaft
   that actually runs straight through is their intersection, which is smaller than any one of
   them — visible in the Stack view as three overlapping squares. Size cores accordingly.

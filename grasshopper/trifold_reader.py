@@ -9,7 +9,9 @@ Component inputs
     solid   bool  item    True to also build wall breps and floor slabs
 
 Component outputs
-    plate     exterior wall rectangle per floor, at true elevation and rotation
+    plate     exterior wall outline per floor, at true elevation and rotation — a closed
+              rectilinear polyline (a plain rectangle only where no room pushed or pulled
+              an edge; otherwise it steps locally, in and out, to match the program)
     court     courtyard rectangle per floor (empty when there is no courtyard)
     slabPlan  planar surface of each plate with the courtyard trimmed out
     rooms     one closed rectangle per room, at its floor's elevation
