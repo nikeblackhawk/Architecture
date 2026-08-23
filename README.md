@@ -1,121 +1,128 @@
 # Trifold — rotating-plate school programming studio
 
 A single-file, dependency-free tool for programming a three-storey elementary school on one
-traced floor plate that rotates 40° at every level. Drop programme bubbles onto a plate, drag
-them, and the exterior wall bulges to meet them while the courtyard is squeezed back — inside
-limits you set. Every move re-runs a constraint solver and re-costs the scheme against the
-brief. When the massing holds up, export it to Rhino and Grasshopper.
+rectangular floor plate that rotates 40° at every level. Drop rooms on the plate, drag them
+where you want them, and the plate answers: push a room past an edge and that whole edge builds
+out, so the footprint stays a rectangle and the dimensions stay buildable. Everything is in feet
+and square feet. When the massing holds up, export it to Rhino and Grasshopper.
 
-![the traced plate](assets/floorplate-sketch.jpg)
-
-Open `index.html` in a browser. There is no build step, no server and no network access — the
-whole studio, including the sketch underlay, is in that one file.
+Open `index.html` in a browser. No build step, no server, no network.
 
 ---
 
-## The idea
+## Two rules that shape everything
 
-The sketch gives one plate: an outer teardrop (the exterior wall) with a triangular courtyard
-punched through it. Levels 1 and 2 are the *same* plate, rotated. That single move creates the
-problem the tool exists to solve:
+**Rooms move only when you move them.** There is no force solver, no relaxation, no settling.
+A room changes position when you drag it, nudge it, retype its coordinates or press Tidy floor —
+and at no other time. Constraints apply *while you drag*: a room slides along the plate edge and
+around the courtyard instead of being shoved somewhere a moment later. Rooms are allowed to
+overlap each other; the overlap is drawn in red and totalled in the metrics, because resolving it
+is a design decision, not the tool's.
 
-**a rotated stack only overlaps itself in part, and a stair, lift or riser can only stand where
-all three footprints agree.** That region — the shaded field in the plan and stack views — is
-computed live and is the first thing that moves when you change the rotation angle, the
-rotation centre, or whether the courtyard turns with its plate.
+**The wall builds out, it does not warp.** A room pressing past an edge moves that whole edge
+outward, up to the limit you set. The plate stays a rectangle; the Plate panel shows the
+build-out on each of the four edges; the metrics show the resulting dimensions. At the limit the
+room stops instead — nothing jumps, nothing oscillates. Switch it off for a fixed envelope, and
+any room now outside is flagged rather than moved.
 
 ---
 
-## What the solver does, every frame
+## The rotating stack
 
-Ordered so that hard facts beat soft intentions:
+Levels 1 and 2 are the same rectangle rotated about the courtyard centre. The dashed blue outline
+is the footprint common to all three rotations — computed exactly as the intersection of the
+three rectangles — and it is the only place a stair, lift or riser can run straight up.
 
-| # | Constraint | Behaviour |
-|---|---|---|
-| 1 | **Adjacency graph** | Positive weights pull spaces until they touch, negative weights hold them apart. Editable in *Adjacency*, overridable per space. |
-| 2 | **Daylight** | Spaces flagged as daylight-dependent seek the nearest façade or courtyard edge and rest just inside the clearance zone. |
-| 3 | **Egress** | Anything further from a core than the travel limit is drawn toward one. On the ground floor a door straight out through the exterior wall counts as an exit, which is how a school actually discharges. |
-| 4 | **Separation** | Rooms are solid. Spaces separate by the corridor gap, small rooms giving way to large. This runs *after* the pulls above, so it always wins. |
-| 5 | **Boundary response** | Each space presses on the wall it touches. The exterior wall bulges outward up to the flex limit; the courtyard is squeezed inward down to its minimum. Both are smoothed along the curve so the plate reads as a shape, not a set of dents. |
-| 6 | **Containment** | Whatever the wall could not absorb pushes the space back inside instead. The plate is always a closed, buildable outline. |
-| 7 | **Core stacking** | Cores marked as a stack are held at one world point through all three rotations. Drag one and the whole shaft follows. |
+**Stack ×3** holds a room at one world point through all three rotations; drag it on any floor and
+the whole shaft follows. **Site cores in the shared zone** solves for core positions that minimise
+the worst travel distance while staying inside the common footprint and keeping the exits remote
+from each other. Core stack drift is reported in the metrics and should read 0.0 ft.
 
-Drag a space and it becomes **hand-placed**: adjacency, daylight and egress stop pulling it,
-but separation and containment still apply. *Release to solver* in the Selection panel hands it
-back. That is the difference between a diagram that fights you and one you can actually design in.
+**Courtyard rotates too** decides whether the courtyard turns with its plate or stands still —
+one light well straight up through three pinwheeling floors. Holding it fixed enlarges the shared
+zone and shortens travel distances.
+
+---
+
+## Sizing rooms
+
+Three ways in, all linked:
+
+- **Program list** — `−` and `+` add or remove that room type on the **active floor**. Open the
+  caret to set the type's default area, or its length × width; changing one updates the other.
+  **Apply size** pushes it to every room of that type already on the floor.
+- **Selection panel** — per room: area, or explicit length and width, or exact X / Y position.
+  **Rotate 90°** (or `R`) swaps length and width.
+- **Canvas** — drag a corner handle to resize against the snap module.
+
+New rooms find their own free spot: inside the plate as drawn if one exists, otherwise into the
+build-out zone, choosing the position that grows the plate least.
 
 ---
 
 ## What it measures
 
-**Metrics** — gross floor area, net programmed area, net:gross, m² per student, seat capacity
-against the brief, teaching spaces, occupant load, façade length, envelope:GFA, building
-height, shared core zone, core stack drift, and per-floor gross / net / efficiency / wall
-deflection.
+**Metrics** — gross floor area, net programmed, net:gross, gsf per student, seat capacity against
+the brief, teaching rooms, shared core zone, core stack drift, room overlap, rooms off-plate,
+occupant load, building height, and per-floor gross / net / efficiency / build-out.
 
-**Area schedule** — every programme type with its target (students × the planning ratio), what
-is actually placed, unit count and variance, grouped by department and exportable to CSV.
+**Area schedule** — every program type with its target (students × sf per student), count, what is
+placed, and variance; grouped by department and exportable to CSV.
 
-**Checks** — capacity against the brief, net:gross against target, per-floor overflow, spaces
-overlapping at high density, two remote exits per floor, travel distance to a core, core
-alignment through the rotations, size of the shared zone, toilet provision per floor, daylight
-access, assembly space above grade, and exterior wall saturated at its flex limit.
+**Checks** — capacity, net:gross, per-floor density, room overlap, rooms off the plate, two remote
+exits per floor, travel distance to an exit, core alignment, size of the shared zone, toilet
+provision, assembly above grade, and edges at their build-out limit. Each names its remedy.
 
-Every check names the remedy, not just the fault.
+Travel distance is measured along the plan axes (Manhattan, ×1.15) to the nearest core, or
+straight out through an exterior wall on the ground floor. The default limit is 250 ft — the IBC
+Group E figure with sprinklers; 200 ft without. Set it to whatever your code requires.
 
 ---
 
 ## Views
 
-- **Plan** — the active floor in its own upright frame, with the other rotations ghosted, the
-  undeformed sketch outline dashed behind, wall pressure highlighted, and dimensions, north
-  point and scale bar.
-- **Stack** — all three rotations in the world frame over the shared zone. The pinwheel.
-- **Axon** — exploded isometric stacking diagram with the core shafts running through.
-- **Section** — a true cut through the courtyard centroid: slabs, wall poché, and the rooms the
-  cut passes through at each level.
+- **Plan** — the active floor upright in its own frame, other rotations ghosted, base rectangle
+  dashed behind, built-out edges in amber, courtyard given way in violet, overlaps in red.
+- **Stack** — all three rotations in the world frame over the shared zone.
+- **Axon** — exploded isometric with the core shafts running through.
+- **Section** — a true east–west cut through the courtyard centre.
 
 ---
 
-## Getting it into Rhino and Grasshopper
+## Rhino and Grasshopper
 
-**DXF** (`Export → 3D DXF`) — R12, opens natively in Rhino. All three plates as closed
-polylines at true elevation and true rotation, plus programme circles and text labels, layered
-`L0_EXTERIOR_WALL`, `L0_COURTYARD`, `L0_PROGRAM_CLASSROOM`, `L1_…` and so on.
+**DXF** — R12, opens natively. Three plates, three courtyards and every room as closed rectangles
+at true elevation and rotation, on layers `L0_EXTERIOR_WALL`, `L0_COURTYARD`,
+`L0_ROOM_CLASSROOM`, `L1_…`. Rooms are plain rectangles, so ExtrudeCrv gives you room solids in
+one step.
 
-**JSON** (`Export → Model JSON`) — the whole parametric model:
+**JSON** — the whole parametric model:
 
 ```
 schema, generated, units, source
-parameters      every slider and toggle, in model units
-basePlate       the undeformed traced plate
-floors[]        index, name, elevation, rotationDeg, floorHeight
-                local  { outer, courtyard }        the floor's own upright frame
-                world  { outer, courtyard }        rotated and lifted, ready for Rhino
-                wallOffsets / courtyardOffsets     per-vertex deflection
-                spaces[]  name, type, department, quantity, unitArea, totalArea,
-                          radius, aspect, local, world, occupants, daylight,
-                          locked, handPlaced, stackGroup, colour
-                metrics   gross, net, circulation, netToGross, courtyard, facade,
-                          occupants, teachingSpaces, maxWallPush,
-                          maxCourtyardSqueeze, worstTravelDistance
-commonCoreZone  area and the sampled points
-adjacency, schedule, totals, checks
+parameters      plate W/D, courtyard W/D and offset, wall thickness, grid, module,
+                rotation step and centre, build-out limit, brief, travel limit
+basePlate       the rectangle and courtyard as drawn, before any build-out
+floors[]        index, name, elevation, rotationDeg, plateSize,
+                buildOut {north,east,south,west}, courtyardInset {…},
+                local  { plate, courtyard }          the floor's own upright frame
+                world  { plate, courtyard }          rotated and lifted, ready for Rhino
+                rooms[]  name, type, department, area, length, width,
+                         centreLocal, centreWorld, cornersLocal, cornersWorld,
+                         occupants, locked, stackGroup, colour
+                metrics  gross, net, circulation, netToGross, courtyard, perimeter,
+                         occupants, teachingRooms, overlap, roomsOffPlate, worstTravel
+commonCoreZone, schedule, totals, checks
 ```
 
-Then either:
+- **`grasshopper/trifold_reader.py`** — GhPython component. Inputs `path`, `floor`, `solid`;
+  outputs plate and courtyard curves, plate surfaces, room rectangles with names, areas, types
+  and colours, plus wall breps and slabs.
+- **`rhino/import_trifold.py`** — run with `_-RunPythonScript`. Builds a named layer tree and
+  prints the schedule and every check to the command line.
 
-- **`grasshopper/trifold_reader.py`** — paste into a GhPython component. Inputs `path`,
-  `floor`, `solid`; outputs wall curves, courtyard curves, plate surfaces, programme circles
-  with names, areas, types and colours, plus wall breps and slabs. Re-export from the studio
-  and the component refreshes on file change.
-- **`rhino/import_trifold.py`** — run with `_-RunPythonScript` in Rhino. Builds everything on a
-  named layer tree and prints the schedule and checks to the command line.
-
-Set the Rhino model units to match the export (`Rhino / Grasshopper → Model units`: meters,
-millimetres or feet) before importing.
-
-`samples/` holds a baseline export of the default 700-student brief in all three formats.
+Set the Rhino model units to match the export (`Rhino / Grasshopper → Export units`) first.
+`samples/` holds a baseline export of the default brief in JSON, DXF and CSV.
 
 ---
 
@@ -123,38 +130,36 @@ millimetres or feet) before importing.
 
 | | |
 |---|---|
-| drag | move a space (it becomes hand-placed) |
-| drag the ring handle | resize by area |
-| double-click | place the last-used space |
+| drag | move a room |
+| corner handles | resize |
+| `R` | rotate 90° |
+| double-click | place the last-used room type |
 | shift-click | multi-select |
 | scroll | zoom · **space + drag** or **alt + drag** pan |
-| arrows | nudge 0.5 m · **shift + arrows** one structural bay |
+| arrows | nudge one snap module · **shift + arrows** one structural bay |
 | `1` `2` `3` | switch floor · `F` fit · `G` grid · `L` lock · `Del` delete |
 | `Ctrl+Z` / `Ctrl+Shift+Z` | undo / redo · `Ctrl+D` duplicate |
 
-**Stack ×3** copies a space to the same world point on every floor and holds it there as the
-plates rotate — that is how you make a core. **Re-site cores in the shared zone** solves for
-core positions that minimise the worst travel distance while staying inside the region common
-to all three rotations and keeping the exits remote from each other.
+**Tidy floor** re-packs the active floor on the grid, largest room first, perimeter outward.
+It is the one command that moves rooms you did not touch — locked and stacked rooms are left alone.
 
 Work autosaves to `localStorage`; `Export → Session file` saves and reloads it as a file.
 
 ---
 
-## Scripting the studio
+## Scripting
 
-`window.trifold` is a handle on the running model, for parametric studies from the console:
+`window.trifold` is a handle on the running model:
 
 ```js
-trifold.set({ rotStep: 25, flex: 4, courtRotates: false });   // change params, re-solve
-trifold.metrics.total;                                        // gfa, net, eff, capacity…
-trifold.metrics.floors[1].egress;                             // worst travel on L1
-trifold.siteCores();                                          // re-optimise core positions
-trifold.model();                                              // the export payload
-trifold.view('stack'); trifold.fit();
+trifold.set({ W: 260, D: 200, rotStep: 25, courtRotates: false });
+trifold.metrics.total;                    // gfa, net, eff, capacity, overlap…
+trifold.metrics.floors[0].ext;            // build-out per edge, in feet
+trifold.siteCores(3);
+trifold.model();                          // the export payload
 ```
 
-A sweep of rotation angles against the shared core zone, for instance:
+A sweep of rotation angles against the shared core zone:
 
 ```js
 [0,10,20,30,40,50,60].map(a => {
@@ -166,49 +171,25 @@ A sweep of rotation angles against the shared core zone, for instance:
 
 ---
 
-## A worked example
-
-The studio opens on a 700-student brief at 40°, and it opens with a finding: worst travel
-distance on the upper floors sits right at the 45 m limit. That is not a defect in the setup —
-it is what a 40° rotation does to a plate this elongated. Rotating the courtyard along with the
-wall sweeps a rosette through the middle of the building, so the only region common to all
-three footprints is a thin arc, and every stair is forced into it.
-
-Each remedy the check names is one control away, and the numbers move:
-
-| | worst travel L0 / L1 / L2 | shared zone | findings |
-|---|---|---|---|
-| as shipped — 40°, courtyard turns | 14 / 45 / 47 m | 1,503 m² | 1 fail, 2 warn |
-| hold the courtyard fixed | 17 / 33 / 29 m | 1,691 m² | **all pass** |
-| ease the rotation to 25° | 12 / 42 / 40 m | 1,738 m² | 2 warn |
-| hold the courtyard, rotate about the plate centroid | 21 / 36 / 31 m | 1,710 m² | 1 warn |
-
-Holding the courtyard is the move: one void running straight up through three rotating plates
-gives every level daylight to the same well, widens the region a shaft can stand in by 13%, and
-brings travel distances comfortably inside the limit. Reproduce the table with the
-`Courtyard rotates too` checkbox, or from the console with `trifold.set({courtRotates:false})`.
-
----
-
 ## Repository
 
 ```
-index.html                          the studio — open this
-assets/floorplate-sketch.jpg        the traced sketch, also embedded as the underlay
-grasshopper/trifold_reader.py       GhPython component
-rhino/import_trifold.py             RhinoPython importer
-samples/                            baseline export, JSON + DXF + CSV
-docs/model.md                       geometry, solver and schema notes
+index.html                       the studio — open this
+grasshopper/trifold_reader.py    GhPython component
+rhino/import_trifold.py          RhinoPython importer
+samples/                         baseline export, JSON + DXF + CSV
+docs/model.md                    geometry, constraint and schema notes
+assets/floorplate-sketch.jpg     the original hand sketch the first version traced
 ```
 
 ## Notes and limits
 
-- Programme is represented as circles, so a plate cannot be packed as tightly as it could be
-  with rectangular rooms. Above roughly 65% net:gross the spaces begin to overlap; the tool
-  reports the overlap area rather than hiding it. Treat that as the signal to move programme
-  to another floor or grow the plate, not as a solver failure.
-- The travel-distance check uses a straight-line run with a 1.28 corridor detour factor. It is
-  a massing-stage proxy, not a code compliance check; set the limit to whatever your code
-  requires.
-- Planning ratios in the programme library are defaults for a K–5 school. Edit them for your
+- The default brief opens with the ground floor built out 15 ft on its north edge. That is the
+  tool telling you the truth: gym, cafeteria, kitchen and four kindergartens do not fit the same
+  rectangle as a floor of classrooms. Grow the plate, move program up, or let it build out.
+- A stacked core is a rectangle on each floor, and each floor's rectangle is rotated. The shaft
+  that actually runs straight through is their intersection, which is smaller than any one of
+  them — visible in the Stack view as three overlapping squares. Size cores accordingly.
+- Travel distance is a massing-stage proxy, not a code compliance check.
+- Program sizes and sf-per-student ratios are defaults for a US K–5 school. Edit them for your
   own standards — they drive every target in the schedule.

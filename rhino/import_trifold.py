@@ -1,25 +1,24 @@
 """
-Trifold -> Rhino importer
-=========================
+Trifold -> Rhino importer  (schema trifold.school.v2)
+=====================================================
 Run inside Rhino:  _-RunPythonScript  and pick this file.
-Or paste into the Rhino Python Editor and press Run.
 
-Builds, on named layers:
-    Trifold::L0::Exterior Wall      closed plate curve at true elevation and rotation
-    Trifold::L0::Courtyard          the void curve
-    Trifold::L0::Plate              the planar surface, courtyard trimmed out
-    Trifold::L0::Program::<TYPE>    one circle per space, coloured by program
-    Trifold::L0::Labels             a text dot per space carrying name and area
-    Trifold::Shared Core Zone       the footprint common to all three rotations
-...and writes the area schedule to the command line.
+Builds, on a named layer tree:
+    Trifold::L0::Exterior Wall      the plate rectangle at true elevation and rotation
+    Trifold::L0::Courtyard          the courtyard rectangle
+    Trifold::L0::Plate              planar surface, courtyard trimmed out
+    Trifold::L0::Rooms::<TYPE>      one closed rectangle per room, coloured by program
+    Trifold::L0::Labels             a text dot per room with name and area
+    Trifold::Shared Core Zone       corner points of the footprint common to all rotations
 
-Set the Rhino model units to match the JSON before running.
+Rooms come in as plain rectangles, so ExtrudeCrv straight up gives you room solids.
+The area schedule and every check are printed to the command line.
+
+Set the Rhino model units to match the export before running.
 """
 
 import json
 import rhinoscriptsyntax as rs
-import scriptcontext as sc
-import System.Drawing as sd
 
 ROOT = "Trifold"
 
@@ -30,10 +29,9 @@ def hexcolour(h):
 
 
 def layer(full, colour=None):
-    parts = full.split("::")
     path = ""
-    for p in parts:
-        path = p if not path else path + "::" + p
+    for part in full.split("::"):
+        path = part if not path else path + "::" + part
         if not rs.IsLayer(path):
             rs.AddLayer(path)
     if colour:
@@ -41,12 +39,14 @@ def layer(full, colour=None):
     return full
 
 
-def polyline(points, z, lay):
+def rect(points, z, lay, name=None):
     pts = [(p[0], p[1], z) for p in points]
     if pts[0] != pts[-1]:
         pts.append(pts[0])
     crv = rs.AddPolyline(pts)
     rs.ObjectLayer(crv, lay)
+    if name:
+        rs.ObjectName(crv, name)
     return crv
 
 
@@ -65,43 +65,44 @@ def main():
         tag = "%s::L%d" % (ROOT, f["index"])
         layer(tag)
 
-        outer = polyline(f["world"]["outer"], z, layer(tag + "::Exterior Wall", (255, 255, 255)))
-        court = polyline(f["world"]["courtyard"], z, layer(tag + "::Courtyard", (110, 200, 180)))
+        outer = rect(f["world"]["plate"], z, layer(tag + "::Exterior Wall", (255, 255, 255)),
+                     "L%d plate" % f["index"])
+        border = [outer]
+        if f["world"]["courtyard"]:
+            border.append(rect(f["world"]["courtyard"], z,
+                               layer(tag + "::Courtyard", (110, 200, 180)), "L%d courtyard" % f["index"]))
 
-        srf = rs.AddPlanarSrf([outer, court])
+        srf = rs.AddPlanarSrf(border)
         if srf:
             rs.ObjectLayer(srf, layer(tag + "::Plate", (70, 90, 110)))
 
         labels = layer(tag + "::Labels", (170, 190, 210))
-        for sp in f["spaces"]:
-            x, y, sz = sp["world"]
-            lay = layer("%s::Program::%s" % (tag, sp["type"].upper()), hexcolour(sp["colour"]))
-            circ = rs.AddCircle(rs.PlaneFromNormal((x, y, sz), (0, 0, 1)), sp["radius"])
-            rs.ObjectLayer(circ, lay)
-            rs.ObjectName(circ, sp["name"])
-            dot = rs.AddTextDot("%s\n%s %s2" % (sp["name"], sp["totalArea"], data["units"]),
-                                (x, y, sz))
+        for r in f["rooms"]:
+            lay = layer("%s::Rooms::%s" % (tag, r["type"].upper()), hexcolour(r["colour"]))
+            rect(r["cornersWorld"], z, lay, r["name"])
+            x, y, rz = r["centreWorld"]
+            dot = rs.AddTextDot("%s\n%s sf  %.0f x %.0f" % (r["name"], r["area"], r["length"], r["width"]),
+                                (x, y, rz))
             rs.ObjectLayer(dot, labels)
 
     zone = data.get("commonCoreZone", {})
     if zone.get("points"):
         lay = layer(ROOT + "::Shared Core Zone", (92, 200, 255))
         for p in zone["points"][::4]:
-            pt = rs.AddPoint(p[0], p[1], 0)
-            rs.ObjectLayer(pt, lay)
+            rs.ObjectLayer(rs.AddPoint(p[0], p[1], 0), lay)
 
     rs.EnableRedraw(True)
 
     t = data["totals"]
-    print("-" * 62)
-    print("Trifold  %s  (%s)" % (data["generated"][:10], data["units"]))
-    print("-" * 62)
+    print("-" * 70)
+    print("Trifold  %s  (%s)  %s" % (data["generated"][:10], data["units"], data["schema"]))
+    print("-" * 70)
     for row in data["schedule"]:
-        print("%-26s %8s target %8s placed %6s units"
-              % (row["name"], row["targetArea"], row["placedArea"], row["units"]))
-    print("-" * 62)
-    print("GFA %s   net %s   net:gross %.1f%%   %s per student   capacity %s"
-          % (t["gfa"], t["net"], t["netToGross"] * 100, t["areaPerStudent"], t["capacity"]))
+        print("%-26s %4s no. %10s target %10s placed" %
+              (row["name"], row["count"], row["targetArea"], row["placedArea"]))
+    print("-" * 70)
+    print("GSF %s   net %s   net:gross %.1f%%   %s per student   capacity %s" %
+          (t["gfa"], t["net"], t["netToGross"] * 100, t["areaPerStudent"], t["capacity"]))
     for c in data["checks"]:
         print("[%s] %s" % (c["level"].upper(), c["message"]))
 

@@ -1,7 +1,7 @@
 """
-Trifold -> Grasshopper reader
-=============================
-Paste into a GhPython component (Rhino 7 / Rhino 8, IronPython 2.7 or CPython 3).
+Trifold -> Grasshopper reader  (schema trifold.school.v2)
+=========================================================
+Paste into a GhPython component (Rhino 7 / Rhino 8).
 
 Component inputs
     path    str   item    full path to the JSON exported by Trifold
@@ -9,21 +9,23 @@ Component inputs
     solid   bool  item    True to also build wall breps and floor slabs
 
 Component outputs
-    outer     exterior wall curves, one per floor, at true elevation and rotation
-    court     courtyard curves, one per floor
-    plate     planar surfaces of the floor plate (outer minus courtyard)
-    bubbles   one circle per programmed space, at true elevation
-    names     space names, parallel to `bubbles`
-    areas     space areas, parallel to `bubbles`
-    types     program type keys, parallel to `bubbles`
-    colours   System.Drawing.Color per space, for a Custom Preview
-    walls     extruded wall breps (only when solid = True)
-    slabs     floor slabs (only when solid = True)
-    params    the parameter block as a formatted string
+    plate     exterior wall rectangle per floor, at true elevation and rotation
+    court     courtyard rectangle per floor (empty when there is no courtyard)
+    slabPlan  planar surface of each plate with the courtyard trimmed out
+    rooms     one closed rectangle per room, at its floor's elevation
+    names     room names, parallel to `rooms`
+    areas     room areas, parallel to `rooms`
+    types     program type keys, parallel to `rooms`
+    colours   System.Drawing.Color per room, for a Custom Preview
+    walls     extruded wall breps        (only when solid = True)
+    slabs     extruded floor slabs       (only when solid = True)
+    params    the parameter block, formatted
     report    the checks Trifold raised on this model
 
-Everything arrives in the units the JSON was exported in — set the same units in
-Rhino (Tools > Options > Units) before importing.
+Every room is a plain rectangle, so `rooms` extrudes straight into room solids:
+    Extrude(rooms, Unit Z * floorHeight)
+
+Set the Rhino model units to match the export before importing.
 """
 
 import json
@@ -34,17 +36,17 @@ if floor is None:
     floor = -1
 
 data = json.load(open(path))
-UNITS = data.get("units", "m")
+UNITS = data.get("units", "ft")
+FTF = data["parameters"]["floorToFloor"]
+WALL_T = data["parameters"]["wallThickness"]
 
-outer, court, plate = [], [], []
-bubbles, names, areas, types, colours = [], [], [], [], []
+plate, court, slabPlan = [], [], []
+rooms, names, areas, types, colours = [], [], [], [], []
 walls, slabs = [], []
 
-wall_t = data["parameters"]["wallThickness"]
-ftf = data["parameters"]["floorToFloor"]
 
-
-def _closed_curve(points, z):
+def _rect(points, z):
+    """A closed NURBS curve through the four exported corners."""
     pl = rg.Polyline([rg.Point3d(p[0], p[1], z) for p in points])
     if pl[0].DistanceTo(pl[len(pl) - 1]) > 1e-9:
         pl.Add(pl[0])
@@ -61,33 +63,33 @@ for f in data["floors"]:
         continue
 
     z = f["elevation"]
-    o = _closed_curve(f["world"]["outer"], z)
-    c = _closed_curve(f["world"]["courtyard"], z)
-    outer.append(o)
-    court.append(c)
+    outer = _rect(f["world"]["plate"], z)
+    plate.append(outer)
 
-    faces = rg.Brep.CreatePlanarBreps([o, c])
+    inner = None
+    if f["world"]["courtyard"]:
+        inner = _rect(f["world"]["courtyard"], z)
+        court.append(inner)
+
+    faces = rg.Brep.CreatePlanarBreps([c for c in (outer, inner) if c])
     if faces:
-        plate.extend(faces)
+        slabPlan.extend(faces)
 
     if solid:
-        walls.append(rg.Extrusion.Create(o, -ftf, False).ToBrep())
-        walls.append(rg.Extrusion.Create(c, -ftf, False).ToBrep())
-        if faces:
-            for face in faces:
-                slabs.append(rg.Brep.CreateFromOffsetFace(face.Faces[0], -0.3, 0.001, True, True)
-                             or face)
+        walls.append(rg.Extrusion.Create(outer, -FTF, False).ToBrep())
+        if inner:
+            walls.append(rg.Extrusion.Create(inner, -FTF, False).ToBrep())
+        for face in (faces or []):
+            slabs.append(rg.Extrusion.Create(face.Edges[0].ToNurbsCurve(), -1.0, True).ToBrep()
+                         or face)
 
-    for sp in f["spaces"]:
-        x, y, sz = sp["world"]
-        pl = rg.Plane(rg.Point3d(x, y, sz), rg.Vector3d.ZAxis)
-        bubbles.append(rg.Circle(pl, sp["radius"]).ToNurbsCurve())
-        names.append(sp["name"])
-        areas.append(sp["totalArea"])
-        types.append(sp["type"])
-        colours.append(_hex(sp["colour"]))
+    for r in f["rooms"]:
+        rooms.append(_rect(r["cornersWorld"], z))
+        names.append(r["name"])
+        areas.append(r["area"])
+        types.append(r["type"])
+        colours.append(_hex(r["colour"]))
 
-params = "\n".join("%-22s %s" % (k, v) for k, v in sorted(data["parameters"].items()))
-params = "units: %s\n%s" % (UNITS, params)
-
+params = "units: %s\n" % UNITS
+params += "\n".join("%-22s %s" % (k, v) for k, v in sorted(data["parameters"].items()))
 report = "\n".join("[%s] %s" % (c["level"].upper(), c["message"]) for c in data["checks"])

@@ -1,95 +1,98 @@
-# Model notes
+# Model notes — v2
 
-Reference for anyone extending the studio or consuming its output.
+Reference for extending the studio or consuming its output. Internal units are **feet** and
+**square feet** throughout; only the exporters convert.
 
 ## Coordinate systems
 
-Three frames are in play. Keeping them straight is most of the work.
-
 | Frame | Used for | Origin |
 |---|---|---|
-| **Sketch pixels** | `PX_OUTER`, `PX_INNER` — the traced sketch, y down | sketch top-left |
-| **Model local** | everything the solver touches; each floor is upright in its own frame | outer-plate centroid, y up, metres |
-| **Model world** | exports, the stack/axon/section views, core siting | same origin, floor *i* rotated by `rotStep × i` about the rotation centre |
+| **Floor-local** | everything you edit; each floor is upright and axis-aligned in its own frame | plate centre, y up |
+| **World** | exports, the stack / axon / section views, core siting | same origin, floor *i* rotated by `rotStep × i` about the rotation centre |
 
-`rot(p, floorAngle(i))` takes a point from floor *i*'s local frame to world;
-`rot(p, -floorAngle(i))` brings it back. Distances are rotation-invariant, so travel distance
-and separation can be measured in whichever frame is convenient.
+`rot(p, floorAngle(i))` takes a point from floor *i* to world; `rot(p, -floorAngle(i))` brings it
+back. Distances are rotation-invariant, so travel distance and separation can be measured in
+whichever frame is convenient.
 
-The plate is built once by `buildBase()`: trace → one Chaikin pass → arc-length resample to 132
-points (outer) and 72 points (courtyard) → scale so the outer bounding-box width equals
-`plateW` → recentre on the outer centroid. Both rings are forced counter-clockwise, so the
-outward normal of an edge `(dx, dy)` is `(dy, -dx)`.
+Because the plate is axis-aligned in its own floor's frame, a floor is fully described by four
+numbers: the base rectangle plus a build-out per edge.
 
-## Boundary deformation
+## Geometry
 
-Each floor carries two offset arrays, `oOff` and `iOff`, one scalar per boundary vertex, and
-the deformed ring is `base[i] ± normal[i] × off[i]` — outward for the exterior wall, inward
-(toward the courtyard's own centroid) for the void.
+```
+base plate    { x0:-W/2, y0:-D/2, x1:W/2, y1:D/2 }
+plate         base grown by f.ext.{n,e,s,w}
+base court    { cX ± cW/2, cY ± cD/2 }
+court         base shrunk by f.ins.{n,e,s,w}, as an ORIENTED rectangle
+room          centre x,y with length L and width W, axis-aligned in floor-local
+```
 
-Per frame, `deformFloor()`:
+The courtyard is an oriented rectangle rather than an axis-aligned box because of one option:
+with **courtyard rotates too** switched off, the courtyard stands still in world space while the
+plates turn, so in a floor's own frame it arrives at `-floorAngle(i)`. Every courtyard test
+therefore goes through SAT (separating axis theorem) on two oriented rectangles, which is correct
+in both cases and gives a minimum translation vector for free.
 
-1. For every space, for every vertex within `radius + clearance`, computes the shortfall
-   projected onto that vertex's normal. The largest requirement over all spaces wins.
-2. Clamps the exterior wall to `flex`, and the courtyard to `(1 − courtMin) × |base − centroid|`,
-   so the courtyard can never collapse past its floor.
-3. Smooths each requirement ring with a weighted Laplacian, three passes on the wall and five
-   on the courtyard, which is what makes a bulge read as a curve.
-4. Eases the stored offsets toward the requirement. The requirement is a pure function of the
-   current space positions, so the steady state is deterministic — the same layout always
-   exports the same geometry.
-5. Re-contains every space: anything outside the outer ring, or inside the courtyard, is walked
-   back to the nearest edge and past it by 55% of its radius.
+## The boundary is a pure function
 
-`courtRotates` decides whether the courtyard turns with its plate. With it off, each floor's
-courtyard base is `rot(BASE.inner, -floorAngle(i))`, so the void stands still in world space
-while the wall pinwheels around it — one straight light well through all three levels, and a
-much larger shared core zone.
+`updateBoundaries()` recomputes `ext` and `ins` from the room positions alone. No iteration, no
+easing, no history — the same room layout always produces exactly the same plate, which is what
+makes the exports reproducible and the drawing stable.
 
-## Shared core zone and core siting
+- **Build-out**: `ext.e = clamp(max over rooms of (room.x1 − plate.x1), 0, flex)`, and likewise
+  for the other three edges. One room past an edge moves that whole edge.
+- **Courtyard inset**: for each room overlapping the courtyard, SAT gives the minimum push; that
+  push is projected onto the courtyard's own two axes and applied to whichever of the four sides
+  it names. Capped so the courtyard never falls below `courtMin` of its drawn size in either
+  direction.
 
-`commonZoneArea()` samples a grid over the plate bounding box and keeps points that are inside
-the deformed outer ring and outside the deformed courtyard on **all three** floors, after
-counter-rotating into each floor's frame. Grid sampling rather than polygon boolean, because the
-plate is non-convex and the courtyard is a hole.
+## Constraints apply during the drag
 
-`coreSites(n)` solves a bounded *n*-centre problem:
+`constrainRoom(r, f)` runs on the room being moved, not on the model afterwards:
 
-- **candidates** — shared-zone points at a 5 m inset from both boundaries, relaxed in 1.5 m
-  steps if that leaves nothing, subsampled to ~150.
-- **demand** — a coarse grid over each floor's ring, rotated into world; the union of all three
-  rotated plates is what the cores have to serve.
-- **objective** — minimise the worst `distance × 1.28` from any demand point to its nearest
-  core, subject to the first two cores being at least 30% of the plate diagonal apart, and each
-  further core at least `max(0.55 × that, 14 m)` from the others. Exhaustive over candidate
-  pairs, then greedy.
+1. Clamp the room inside the **envelope** — the base rectangle grown by the build-out limit. This
+   is why a room stops dead at the limit instead of dragging the wall past it.
+2. If it laps the courtyard's minimum size, SAT pushes it clear along the shallowest axis, then
+   re-clamps to the envelope.
+3. Outdoor rooms are inverted: they are clamped *inside* the courtyard, in the courtyard's own
+   axes, and are excluded from build-out, inset and overlap.
 
-## Solver ordering
+`roomFaults(f, r)` reports — never fixes — rooms outside the plate or inside the courtyard
+minimum. Overlap between rooms is measured exactly (rectangle intersection) and reported the
+same way.
 
-`solve()` runs adjacency → daylight → egress → separation (two passes) → boundary and
-containment, per floor, then core stacking across floors. Goal-seeking must come *before*
-separation, or every frame reintroduces the overlap that separation just resolved.
+Locked rooms are skipped by drag, nudge and Tidy. Stacked rooms are never snapped per floor —
+the world site is snapped once and each floor's position derived from it, or the shaft drifts.
 
-Three flags govern how much of that applies to a given space:
+## Placement
 
-- `lock` — frozen entirely.
-- `stack` (with core stacking on) — `pinned`: a fixed obstacle that pushes others but is only
-  moved by the stack constraint and by hard containment.
-- `placed` — `held`: hand-placed. Skips adjacency, daylight and egress; still separates and is
-  still contained.
+`findSpot()` scans the snap module for a position whose rectangle clears the courtyard and every
+placed room, preferring the perimeter (daylight, and it leaves the middle for circulation). Two
+passes: the base rectangle first, then — only if build-out is on — the envelope, scored to grow
+the plate as little as possible. Existing rooms are never disturbed.
 
-## Metrics
+## Shared core zone
 
-Gross is `|area(outer)| − |area(courtyard)|` on the **deformed** rings, so the plate area
-reported is the one you are looking at. Net excludes `outdoor`, which lives in the courtyard
-void and is contained inside it rather than in the ring.
+The plates are convex, so the footprint common to all three rotations is the exact intersection
+of three rectangles, computed with Sutherland–Hodgman clipping and drawn as a polygon. The
+*area* reported also excludes each floor's courtyard, which breaks convexity, so that number
+comes from a grid sample.
 
-Overlap is exact circle-circle lens area summed over every pair on a floor, reported against
-net so the density warning scales with the scheme.
+`coreSites(n)` solves a bounded *n*-centre problem: candidates are shared-zone points inset from
+both boundaries by the structural grid *and* clear of the courtyard by the core's own footprint;
+demand is a coarse grid over all three rotated plates; the objective is the worst Manhattan
+travel × 1.15, subject to the first two cores being at least 30% of the plate diagonal apart.
+Exhaustive over candidate pairs, then greedy for any further cores.
 
 ## Export scaling
 
-`ESCALE = { m: 1, mm: 1000, ft: 3.28084 }`. Lengths are multiplied by it, areas by its square,
-angles never. The on-screen readouts convert with a separate table that leaves millimetres
-displayed as metres — a plan annotated in millimetres is unreadable — so choosing `mm` changes
-what is exported, not what is drawn.
+`EXPORT_SCALE = { ft: 1, in: 12, m: 0.3048, mm: 304.8 }`. Lengths multiply by it, areas by its
+square, angles never. The plan always draws in feet and inches regardless of the export setting.
+
+## What v2 dropped from v1
+
+The adjacency graph, daylight pinning, egress pull, inter-room separation forces and the
+per-vertex boundary offset field are all gone. They made the diagram restless: rooms drifted
+after you let go, and a nudge to the wall-flex slider re-solved every floor. The rectangular
+plate, the pure boundary function and drag-time constraints replace them. The one behaviour kept
+from that family is core stacking, which is a hard geometric identity rather than a force.

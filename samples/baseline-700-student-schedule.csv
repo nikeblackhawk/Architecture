@@ -1,95 +1,96 @@
-Floor,Level name,Elevation,Rotation deg,Space ID,Space name,Type,Department,Qty,Unit area,Total area,Occupants,Local X,Local Y,World X,World Y,World Z,Radius,Daylight,Locked,Hand-placed,Stack group
-0,Ground — Shared & Early Years,0.000,0,1000,Entry / Lobby 101,Entry / Lobby,Circulation,1,120.00,120.00,40,11.523,-6.175,11.523,-6.175,0.000,6.180,yes,no,no,
-0,Ground — Shared & Early Years,0.000,0,1001,Administration 101,Administration,Support,1,130.00,130.00,14,18.901,2.366,18.901,2.366,0.000,6.433,yes,no,no,
-0,Ground — Shared & Early Years,0.000,0,1002,Health / Counseling 101,Health / Counseling,Support,1,48.00,48.00,6,9.361,5.065,9.361,5.065,0.000,3.909,yes,no,no,
-0,Ground — Shared & Early Years,0.000,0,1003,Staff / Workroom 101,Staff / Workroom,Support,1,70.00,70.00,20,20.129,11.646,20.129,11.646,0.000,4.720,yes,no,no,
-0,Ground — Shared & Early Years,0.000,0,1004,Gymnasium 101,Gymnasium,Commons,1,430.00,430.00,120,9.269,22.279,9.269,22.279,0.000,11.699,no,no,no,
-0,Ground — Shared & Early Years,0.000,0,1005,Stage / Assembly 101,Stage / Assembly,Commons,1,110.00,110.00,60,-9.296,30.319,-9.296,30.319,0.000,5.917,no,no,no,
-0,Ground — Shared & Early Years,0.000,0,1006,Cafeteria / Commons 101,Cafeteria / Commons,Commons,1,300.00,300.00,200,-15.880,8.159,-15.880,8.159,0.000,9.772,yes,no,no,
-0,Ground — Shared & Early Years,0.000,0,1007,Kitchen / Servery 101,Kitchen / Servery,Commons,1,120.00,120.00,8,-22.867,-16.716,-22.867,-16.716,0.000,6.180,no,no,no,
-0,Ground — Shared & Early Years,0.000,0,1008,Kindergarten 101,Kindergarten,Learning,1,96.00,96.00,24,-13.759,-8.082,-13.759,-8.082,0.000,5.528,yes,no,no,
-0,Ground — Shared & Early Years,0.000,0,1009,Kindergarten 102,Kindergarten,Learning,1,96.00,96.00,24,-12.437,-30.310,-12.437,-30.310,0.000,5.528,yes,no,no,
-0,Ground — Shared & Early Years,0.000,0,1010,Kindergarten 103,Kindergarten,Learning,1,96.00,96.00,24,-0.215,-28.956,-0.215,-28.956,0.000,5.528,yes,no,no,
-0,Ground — Shared & Early Years,0.000,0,1011,Kindergarten 104,Kindergarten,Learning,1,96.00,96.00,24,11.303,-32.211,11.303,-32.211,0.000,5.528,yes,no,no,
-0,Ground — Shared & Early Years,0.000,0,1012,Kindergarten 105,Kindergarten,Learning,1,96.00,96.00,24,-7.701,-18.950,-7.701,-18.950,0.000,5.528,yes,no,no,
-0,Ground — Shared & Early Years,0.000,0,1013,Toilet Group 101,Toilet Group,Support,1,44.00,44.00,0,16.914,-24.733,16.914,-24.733,0.000,3.742,no,no,no,
-0,Ground — Shared & Early Years,0.000,0,1014,Toilet Group 102,Toilet Group,Support,1,44.00,44.00,0,1.800,-15.905,1.800,-15.905,0.000,3.742,no,no,no,
-0,Ground — Shared & Early Years,0.000,0,1015,Storage / Support 101,Storage / Support,Support,1,38.00,38.00,0,25.415,-25.103,25.415,-25.103,0.000,3.478,no,no,no,
-0,Ground — Shared & Early Years,0.000,0,1016,Storage / Support 102,Storage / Support,Support,1,38.00,38.00,0,12.751,-14.813,12.751,-14.813,0.000,3.478,no,no,no,
-0,Ground — Shared & Early Years,0.000,0,1017,Mech / Electrical 101,Mech / Electrical,Support,1,56.00,56.00,0,23.992,-5.741,23.992,-5.741,0.000,4.222,no,no,no,
-0,Ground — Shared & Early Years,0.000,0,1018,Outdoor Learning 101,Outdoor Learning,Outdoor,1,130.00,130.00,30,5.743,2.833,5.743,2.833,0.000,6.433,yes,no,no,
-0,Ground — Shared & Early Years,0.000,0,1060,Stair 01 + Lift,Vertical Core,Circulation,1,58.00,58.00,0,8.227,-21.567,8.227,-21.567,0.000,4.297,no,no,no,core0
-0,Ground — Shared & Early Years,0.000,0,1063,Stair 02 + Lift,Vertical Core,Circulation,1,58.00,58.00,0,21.827,-16.767,21.827,-16.767,0.000,4.297,no,no,no,core1
-0,Ground — Shared & Early Years,0.000,0,1066,Service Core + Risers,Vertical Core,Circulation,1,58.00,58.00,0,20.227,-9.567,20.227,-9.567,0.000,4.297,no,no,no,core2
-1,Level 01 — Lower Grades,4.200,40,1019,General Classroom 201,General Classroom,Learning,1,74.00,74.00,26,13.432,-11.208,17.791,0.629,4.200,4.853,yes,no,no,
-1,Level 01 — Lower Grades,4.200,40,1020,General Classroom 202,General Classroom,Learning,1,74.00,74.00,26,17.665,-2.337,15.331,10.145,4.200,4.853,yes,no,no,
-1,Level 01 — Lower Grades,4.200,40,1021,General Classroom 203,General Classroom,Learning,1,74.00,74.00,26,9.141,4.342,4.509,9.783,4.200,4.853,yes,no,no,
-1,Level 01 — Lower Grades,4.200,40,1022,General Classroom 204,General Classroom,Learning,1,74.00,74.00,26,5.693,13.948,-4.308,14.925,4.200,4.853,yes,no,no,
-1,Level 01 — Lower Grades,4.200,40,1023,General Classroom 205,General Classroom,Learning,1,74.00,74.00,26,14.184,8.513,5.691,16.220,4.200,4.853,yes,no,no,
-1,Level 01 — Lower Grades,4.200,40,1024,General Classroom 206,General Classroom,Learning,1,74.00,74.00,26,-8.739,12.910,-14.696,4.853,4.200,4.853,yes,no,no,
-1,Level 01 — Lower Grades,4.200,40,1025,General Classroom 207,General Classroom,Learning,1,74.00,74.00,26,-10.676,3.129,-9.893,-3.884,4.200,4.853,yes,no,no,
-1,Level 01 — Lower Grades,4.200,40,1026,General Classroom 208,General Classroom,Learning,1,74.00,74.00,26,-17.134,8.222,-18.114,-4.135,4.200,4.853,yes,no,no,
-1,Level 01 — Lower Grades,4.200,40,1027,General Classroom 209,General Classroom,Learning,1,74.00,74.00,26,-21.517,-2.220,-14.759,-14.951,4.200,4.853,yes,no,no,
-1,Level 01 — Lower Grades,4.200,40,1028,General Classroom 210,General Classroom,Learning,1,74.00,74.00,26,-21.682,-12.808,-8.080,-23.168,4.200,4.853,yes,no,no,
-1,Level 01 — Lower Grades,4.200,40,1029,General Classroom 211,General Classroom,Learning,1,74.00,74.00,26,-13.445,-7.050,-5.471,-13.462,4.200,4.853,yes,no,no,
-1,Level 01 — Lower Grades,4.200,40,1030,General Classroom 212,General Classroom,Learning,1,74.00,74.00,26,-18.561,-23.835,1.400,-29.609,4.200,4.853,yes,no,no,
-1,Level 01 — Lower Grades,4.200,40,1031,Small Group / SPED 201,Small Group / SPED,Learning,1,34.00,34.00,8,-13.278,0.591,-10.254,-7.501,4.200,3.290,yes,no,no,
-1,Level 01 — Lower Grades,4.200,40,1032,Small Group / SPED 202,Small Group / SPED,Learning,1,34.00,34.00,8,-13.663,-15.183,-0.410,-19.833,4.200,3.290,yes,no,no,
-1,Level 01 — Lower Grades,4.200,40,1033,Art / Maker 201,Art / Maker,Learning,1,104.00,104.00,26,-4.465,-32.313,17.647,-27.043,4.200,5.754,yes,no,no,
-1,Level 01 — Lower Grades,4.200,40,1034,Library / Media 201,Library / Media,Commons,1,190.00,190.00,60,-1.973,-18.935,10.956,-15.193,4.200,7.777,yes,no,no,
-1,Level 01 — Lower Grades,4.200,40,1035,Toilet Group 201,Toilet Group,Support,1,44.00,44.00,0,18.050,-19.076,26.386,-2.431,4.200,3.742,no,no,no,
-1,Level 01 — Lower Grades,4.200,40,1036,Toilet Group 202,Toilet Group,Support,1,44.00,44.00,0,10.919,-4.727,11.700,3.979,4.200,3.742,no,no,no,
-1,Level 01 — Lower Grades,4.200,40,1037,Storage / Support 201,Storage / Support,Support,1,38.00,38.00,0,25.093,-23.946,34.912,-1.634,4.200,3.478,no,no,no,
-1,Level 01 — Lower Grades,4.200,40,1038,Staff / Workroom 201,Staff / Workroom,Support,1,70.00,70.00,20,23.688,-11.540,25.861,6.967,4.200,4.720,yes,no,no,
-1,Level 01 — Lower Grades,4.200,40,1061,Stair 01 + Lift,Vertical Core,Circulation,1,58.00,58.00,0,-8.161,-22.063,8.227,-21.567,4.200,4.297,no,no,no,core0
-1,Level 01 — Lower Grades,4.200,40,1064,Stair 02 + Lift,Vertical Core,Circulation,1,58.00,58.00,0,5.342,-27.128,21.827,-16.767,4.200,4.297,no,no,no,core1
-1,Level 01 — Lower Grades,4.200,40,1067,Service Core + Risers,Vertical Core,Circulation,1,58.00,58.00,0,8.745,-20.584,20.227,-9.567,4.200,4.297,no,no,no,core2
-2,Level 02 — Upper Grades,8.400,80,1039,General Classroom 301,General Classroom,Learning,1,74.00,74.00,26,2.405,-17.644,17.945,0.521,8.400,4.853,yes,no,no,
-2,Level 02 — Upper Grades,8.400,80,1040,General Classroom 302,General Classroom,Learning,1,74.00,74.00,26,8.523,-25.353,26.599,5.207,8.400,4.853,yes,no,no,
-2,Level 02 — Upper Grades,8.400,80,1041,General Classroom 303,General Classroom,Learning,1,74.00,74.00,26,13.472,-16.304,18.547,11.653,8.400,4.853,yes,no,no,
-2,Level 02 — Upper Grades,8.400,80,1042,General Classroom 304,General Classroom,Learning,1,74.00,74.00,26,17.130,-4.124,7.187,17.370,8.400,4.853,yes,no,no,
-2,Level 02 — Upper Grades,8.400,80,1043,General Classroom 305,General Classroom,Learning,1,74.00,74.00,26,14.719,7.550,-4.728,17.023,8.400,4.853,yes,no,no,
-2,Level 02 — Upper Grades,8.400,80,1044,General Classroom 306,General Classroom,Learning,1,74.00,74.00,26,10.474,-9.134,10.965,9.945,8.400,4.853,yes,no,no,
-2,Level 02 — Upper Grades,8.400,80,1045,General Classroom 307,General Classroom,Learning,1,74.00,74.00,26,9.738,1.886,-0.015,11.134,8.400,4.853,yes,no,no,
-2,Level 02 — Upper Grades,8.400,80,1046,General Classroom 308,General Classroom,Learning,1,74.00,74.00,26,-9.103,9.215,-10.504,-6.148,8.400,4.853,yes,no,no,
-2,Level 02 — Upper Grades,8.400,80,1047,General Classroom 309,General Classroom,Learning,1,74.00,74.00,26,6.061,12.836,-11.438,9.414,8.400,4.853,yes,no,no,
-2,Level 02 — Upper Grades,8.400,80,1048,General Classroom 310,General Classroom,Learning,1,74.00,74.00,26,-12.312,2.664,-4.610,-10.446,8.400,4.853,yes,no,no,
-2,Level 02 — Upper Grades,8.400,80,1049,General Classroom 311,General Classroom,Learning,1,74.00,74.00,26,-14.246,19.605,-21.630,-9.408,8.400,4.853,yes,no,no,
-2,Level 02 — Upper Grades,8.400,80,1050,General Classroom 312,General Classroom,Learning,1,74.00,74.00,26,-5.267,19.762,-20.225,-0.538,8.400,4.853,yes,no,no,
-2,Level 02 — Upper Grades,8.400,80,1051,STEM / Science Lab 301,STEM / Science Lab,Learning,1,98.00,98.00,26,-21.957,-1.533,-2.151,-20.673,8.400,5.585,yes,no,no,
-2,Level 02 — Upper Grades,8.400,80,1052,STEM / Science Lab 302,STEM / Science Lab,Learning,1,98.00,98.00,26,-17.760,9.330,-12.121,-14.653,8.400,5.585,yes,no,no,
-2,Level 02 — Upper Grades,8.400,80,1053,Music 301,Music,Learning,1,96.00,96.00,30,-12.250,-11.595,9.443,-12.861,8.400,5.528,no,no,no,
-2,Level 02 — Upper Grades,8.400,80,1054,Small Group / SPED 301,Small Group / SPED,Learning,1,34.00,34.00,8,-10.922,-0.959,-0.801,-9.706,8.400,3.290,yes,no,no,
-2,Level 02 — Upper Grades,8.400,80,1055,Small Group / SPED 302,Small Group / SPED,Learning,1,34.00,34.00,8,-15.684,-3.826,1.195,-14.894,8.400,3.290,yes,no,no,
-2,Level 02 — Upper Grades,8.400,80,1056,Toilet Group 301,Toilet Group,Support,1,44.00,44.00,0,-1.832,-14.583,14.194,-3.120,8.400,3.742,no,no,no,
-2,Level 02 — Upper Grades,8.400,80,1057,Toilet Group 302,Toilet Group,Support,1,44.00,44.00,0,-0.559,-28.324,27.948,-4.253,8.400,3.742,no,no,no,
-2,Level 02 — Upper Grades,8.400,80,1058,Storage / Support 301,Storage / Support,Support,1,38.00,38.00,0,17.601,-29.333,32.095,13.456,8.400,3.478,no,no,no,
-2,Level 02 — Upper Grades,8.400,80,1059,Staff / Workroom 301,Staff / Workroom,Support,1,70.00,70.00,20,23.948,-20.741,24.735,21.199,8.400,4.720,yes,no,no,
-2,Level 02 — Upper Grades,8.400,80,1062,Stair 01 + Lift,Vertical Core,Circulation,1,58.00,58.00,0,-21.035,-11.909,8.227,-21.567,8.400,4.297,no,no,no,core0
-2,Level 02 — Upper Grades,8.400,80,1065,Stair 02 + Lift,Vertical Core,Circulation,1,58.00,58.00,0,-13.946,-24.469,21.827,-16.767,8.400,4.297,no,no,no,core1
-2,Level 02 — Upper Grades,8.400,80,1068,Service Core + Risers,Vertical Core,Circulation,1,58.00,58.00,0,-7.133,-21.643,20.227,-9.567,8.400,4.297,no,no,no,core2
+Floor,Level name,Elevation ft,Rotation deg,Room ID,Room name,Type,Department,Area sf,Length ft,Width ft,Occupants,Local X,Local Y,World X,World Y,World Z,Locked,Stack group
+0,Ground — Shared & Early Years,0.00,0,2000,Stair 01 + Lift,Vertical Core,Circulation,750,30.0,25.0,0,-30.0,-65.0,-30.0,-65.0,0.00,no,core0
+0,Ground — Shared & Early Years,0.00,0,2003,Stair 02 + Lift,Vertical Core,Circulation,750,30.0,25.0,0,30.0,60.0,30.0,60.0,0.00,no,core1
+0,Ground — Shared & Early Years,0.00,0,2006,Service Core + Risers,Vertical Core,Circulation,750,30.0,25.0,0,-75.0,-50.0,-75.0,-50.0,0.00,no,core2
+0,Ground — Shared & Early Years,0.00,0,2009,Gymnasium 101,Gymnasium,Commons,5000,100.0,50.0,150,-60.0,55.0,-60.0,55.0,0.00,no,
+0,Ground — Shared & Early Years,0.00,0,2010,Cafeteria / Commons 101,Cafeteria / Commons,Commons,3000,60.0,50.0,250,-80.0,-10.0,-80.0,-10.0,0.00,no,
+0,Ground — Shared & Early Years,0.00,0,2011,Kitchen / Servery 101,Kitchen / Servery,Commons,1500,50.0,30.0,8,10.0,-75.0,10.0,-75.0,0.00,no,
+0,Ground — Shared & Early Years,0.00,0,2012,Stage / Assembly 101,Stage / Assembly,Commons,1200,40.0,30.0,60,55.0,-75.0,55.0,-75.0,0.00,no,
+0,Ground — Shared & Early Years,0.00,0,2013,Entry / Lobby 101,Entry / Lobby,Circulation,1600,40.0,40.0,40,65.0,70.0,65.0,70.0,0.00,no,
+0,Ground — Shared & Early Years,0.00,0,2014,Administration 101,Administration,Support,1800,60.0,30.0,14,80.0,-45.0,80.0,-45.0,0.00,no,
+0,Ground — Shared & Early Years,0.00,0,2015,Health / Counseling 101,Health / Counseling,Support,600,30.0,20.0,6,-95.0,-80.0,-95.0,-80.0,0.00,no,
+0,Ground — Shared & Early Years,0.00,0,2016,Staff / Workroom 101,Staff / Workroom,Support,900,30.0,30.0,20,90.0,-75.0,90.0,-75.0,0.00,no,
+0,Ground — Shared & Early Years,0.00,0,2017,Kindergarten 101,Kindergarten,Learning,1200,40.0,30.0,24,90.0,-15.0,90.0,-15.0,0.00,no,
+0,Ground — Shared & Early Years,0.00,0,2018,Kindergarten 102,Kindergarten,Learning,1200,40.0,30.0,24,90.0,15.0,90.0,15.0,0.00,no,
+0,Ground — Shared & Early Years,0.00,0,2019,Kindergarten 103,Kindergarten,Learning,1200,40.0,30.0,24,5.0,-45.0,5.0,-45.0,0.00,no,
+0,Ground — Shared & Early Years,0.00,0,2020,Kindergarten 104,Kindergarten,Learning,1200,40.0,30.0,24,10.0,90.0,10.0,90.0,0.00,no,
+0,Ground — Shared & Early Years,0.00,0,2021,Toilet Group 101,Toilet Group,Support,500,25.0,20.0,0,-67.5,-80.0,-67.5,-80.0,0.00,no,
+0,Ground — Shared & Early Years,0.00,0,2022,Toilet Group 102,Toilet Group,Support,500,25.0,20.0,0,97.5,40.0,97.5,40.0,0.00,no,
+0,Ground — Shared & Early Years,0.00,0,2023,Storage / Support 101,Storage / Support,Support,400,20.0,20.0,0,-100.0,-60.0,-100.0,-60.0,0.00,no,
+0,Ground — Shared & Early Years,0.00,0,2024,Storage / Support 102,Storage / Support,Support,400,20.0,20.0,0,0.0,40.0,0.0,40.0,0.00,no,
+0,Ground — Shared & Early Years,0.00,0,2025,Mech / Electrical 101,Mech / Electrical,Support,800,40.0,20.0,0,65.0,40.0,65.0,40.0,0.00,no,
+0,Ground — Shared & Early Years,0.00,0,2069,Outdoor Learning 101,Outdoor Learning,Outdoor,1600,40.0,40.0,30,0.0,0.0,0.0,0.0,0.00,no,
+1,Level 01 — Lower Grades,14.00,40,2001,Stair 01 + Lift,Vertical Core,Circulation,750,30.0,25.0,0,-64.8,-30.5,-30.0,-65.0,14.00,no,core0
+1,Level 01 — Lower Grades,14.00,40,2004,Stair 02 + Lift,Vertical Core,Circulation,750,30.0,25.0,0,61.5,26.7,30.0,60.0,14.00,no,core1
+1,Level 01 — Lower Grades,14.00,40,2007,Service Core + Risers,Vertical Core,Circulation,750,30.0,25.0,0,-89.6,9.9,-75.0,-50.0,14.00,no,core2
+1,Level 01 — Lower Grades,14.00,40,2026,General Classroom 201,General Classroom,Learning,900,36.0,25.0,26,-92.0,-77.5,-20.7,-118.5,14.00,no,
+1,Level 01 — Lower Grades,14.00,40,2027,General Classroom 202,General Classroom,Learning,900,36.0,25.0,26,-92.0,37.5,-94.6,-30.4,14.00,no,
+1,Level 01 — Lower Grades,14.00,40,2028,General Classroom 203,General Classroom,Learning,900,36.0,25.0,26,-92.0,62.5,-110.7,-11.3,14.00,no,
+1,Level 01 — Lower Grades,14.00,40,2029,General Classroom 204,General Classroom,Learning,900,36.0,25.0,26,-52.0,-77.5,10.0,-92.8,14.00,no,
+1,Level 01 — Lower Grades,14.00,40,2030,General Classroom 205,General Classroom,Learning,900,36.0,25.0,26,-52.0,77.5,-89.7,25.9,14.00,no,
+1,Level 01 — Lower Grades,14.00,40,2031,General Classroom 206,General Classroom,Learning,900,36.0,25.0,26,-12.0,-77.5,40.6,-67.1,14.00,no,
+1,Level 01 — Lower Grades,14.00,40,2032,General Classroom 207,General Classroom,Learning,900,36.0,25.0,26,-12.0,77.5,-59.0,51.7,14.00,no,
+1,Level 01 — Lower Grades,14.00,40,2033,General Classroom 208,General Classroom,Learning,900,36.0,25.0,26,28.0,-77.5,71.3,-41.4,14.00,no,
+1,Level 01 — Lower Grades,14.00,40,2034,General Classroom 209,General Classroom,Learning,900,36.0,25.0,26,28.0,77.5,-28.4,77.4,14.00,no,
+1,Level 01 — Lower Grades,14.00,40,2035,General Classroom 210,General Classroom,Learning,900,36.0,25.0,26,68.0,-77.5,101.9,-15.7,14.00,no,
+1,Level 01 — Lower Grades,14.00,40,2036,General Classroom 211,General Classroom,Learning,900,36.0,25.0,26,68.0,77.5,2.3,103.1,14.00,no,
+1,Level 01 — Lower Grades,14.00,40,2037,General Classroom 212,General Classroom,Learning,900,36.0,25.0,26,-2.0,-42.5,25.8,-33.8,14.00,no,
+1,Level 01 — Lower Grades,14.00,40,2038,General Classroom 213,General Classroom,Learning,900,36.0,25.0,26,-2.0,42.5,-28.9,31.3,14.00,no,
+1,Level 01 — Lower Grades,14.00,40,2039,Small Group / SPED 201,Small Group / SPED,Learning,400,20.0,20.0,8,-100.0,-55.0,-41.3,-106.4,14.00,no,
+1,Level 01 — Lower Grades,14.00,40,2040,Small Group / SPED 202,Small Group / SPED,Learning,400,20.0,20.0,8,-100.0,-35.0,-54.1,-91.1,14.00,no,
+1,Level 01 — Lower Grades,14.00,40,2041,Art / Maker 201,Art / Maker,Learning,1200,40.0,30.0,26,90.0,-50.0,101.1,19.5,14.00,no,
+1,Level 01 — Lower Grades,14.00,40,2042,Library / Media 201,Library / Media,Commons,2400,60.0,40.0,60,80.0,-15.0,70.9,39.9,14.00,no,
+1,Level 01 — Lower Grades,14.00,40,2043,Toilet Group 201,Toilet Group,Support,500,25.0,20.0,0,-97.5,-15.0,-65.0,-74.2,14.00,no,
+1,Level 01 — Lower Grades,14.00,40,2044,Toilet Group 202,Toilet Group,Support,500,25.0,20.0,0,97.5,15.0,65.0,74.2,14.00,no,
+1,Level 01 — Lower Grades,14.00,40,2045,Storage / Support 201,Storage / Support,Support,400,20.0,20.0,0,100.0,-80.0,128.0,3.0,14.00,no,
+1,Level 01 — Lower Grades,14.00,40,2046,Staff / Workroom 201,Staff / Workroom,Support,900,30.0,30.0,20,95.0,40.0,47.1,91.7,14.00,no,
+2,Level 02 — Upper Grades,28.00,80,2002,Stair 01 + Lift,Vertical Core,Circulation,750,30.0,25.0,0,-69.2,18.3,-30.0,-65.0,28.00,no,core0
+2,Level 02 — Upper Grades,28.00,80,2005,Stair 02 + Lift,Vertical Core,Circulation,750,30.0,25.0,0,64.3,-19.1,30.0,60.0,28.00,no,core1
+2,Level 02 — Upper Grades,28.00,80,2008,Service Core + Risers,Vertical Core,Circulation,750,30.0,25.0,0,-62.3,65.2,-75.0,-50.0,28.00,no,core2
+2,Level 02 — Upper Grades,28.00,80,2047,General Classroom 301,General Classroom,Learning,900,36.0,25.0,26,-92.0,-77.5,60.3,-104.1,28.00,no,
+2,Level 02 — Upper Grades,28.00,80,2048,General Classroom 302,General Classroom,Learning,900,36.0,25.0,26,-92.0,-52.5,35.7,-99.7,28.00,no,
+2,Level 02 — Upper Grades,28.00,80,2049,General Classroom 303,General Classroom,Learning,900,36.0,25.0,26,-92.0,-27.5,11.1,-95.4,28.00,no,
+2,Level 02 — Upper Grades,28.00,80,2050,General Classroom 304,General Classroom,Learning,900,36.0,25.0,26,-52.0,-77.5,67.3,-64.7,28.00,no,
+2,Level 02 — Upper Grades,28.00,80,2051,General Classroom 305,General Classroom,Learning,900,36.0,25.0,26,-27.0,77.5,-81.0,-13.1,28.00,no,
+2,Level 02 — Upper Grades,28.00,80,2052,General Classroom 306,General Classroom,Learning,900,36.0,25.0,26,-12.0,-77.5,74.2,-25.3,28.00,no,
+2,Level 02 — Upper Grades,28.00,80,2053,General Classroom 307,General Classroom,Learning,900,36.0,25.0,26,13.0,77.5,-74.1,26.3,28.00,no,
+2,Level 02 — Upper Grades,28.00,80,2054,General Classroom 308,General Classroom,Learning,900,36.0,25.0,26,28.0,-77.5,81.2,14.1,28.00,no,
+2,Level 02 — Upper Grades,28.00,80,2055,General Classroom 309,General Classroom,Learning,900,36.0,25.0,26,53.0,77.5,-67.1,65.7,28.00,no,
+2,Level 02 — Upper Grades,28.00,80,2056,General Classroom 310,General Classroom,Learning,900,36.0,25.0,26,68.0,-77.5,88.1,53.5,28.00,no,
+2,Level 02 — Upper Grades,28.00,80,2057,General Classroom 311,General Classroom,Learning,900,36.0,25.0,26,-2.0,-42.5,41.5,-9.3,28.00,no,
+2,Level 02 — Upper Grades,28.00,80,2058,General Classroom 312,General Classroom,Learning,900,36.0,25.0,26,-2.0,42.5,-42.2,5.4,28.00,no,
+2,Level 02 — Upper Grades,28.00,80,2059,General Classroom 313,General Classroom,Learning,900,36.0,25.0,26,88.0,-52.5,67.0,77.5,28.00,no,
+2,Level 02 — Upper Grades,28.00,80,2060,STEM / Science Lab 301,STEM / Science Lab,Learning,1000,40.0,25.0,26,90.0,7.5,8.2,89.9,28.00,no,
+2,Level 02 — Upper Grades,28.00,80,2061,STEM / Science Lab 302,STEM / Science Lab,Learning,1000,40.0,25.0,26,90.0,32.5,-16.4,94.3,28.00,no,
+2,Level 02 — Upper Grades,28.00,80,2062,Music 301,Music,Learning,1200,40.0,30.0,30,-40.0,-45.0,37.4,-47.2,28.00,no,
+2,Level 02 — Upper Grades,28.00,80,2063,Small Group / SPED 301,Small Group / SPED,Learning,400,20.0,20.0,8,-100.0,-5.0,-12.4,-99.3,28.00,no,
+2,Level 02 — Upper Grades,28.00,80,2064,Small Group / SPED 302,Small Group / SPED,Learning,400,20.0,20.0,8,-100.0,15.0,-32.1,-95.9,28.00,no,
+2,Level 02 — Upper Grades,28.00,80,2065,Toilet Group 301,Toilet Group,Support,500,25.0,20.0,0,-97.5,35.0,-51.4,-89.9,28.00,no,
+2,Level 02 — Upper Grades,28.00,80,2066,Toilet Group 302,Toilet Group,Support,500,25.0,20.0,0,-97.5,55.0,-71.1,-86.5,28.00,no,
+2,Level 02 — Upper Grades,28.00,80,2067,Storage / Support 301,Storage / Support,Support,400,20.0,20.0,0,-100.0,75.0,-91.2,-85.5,28.00,no,
+2,Level 02 — Upper Grades,28.00,80,2068,Staff / Workroom 301,Staff / Workroom,Support,900,30.0,30.0,20,90.0,75.0,-58.2,101.7,28.00,no,
 
 Area schedule
-Type,Department,Target,Placed,Units,Variance
-General Classroom,Learning,1750.00,1776.00,24,26.00
-Kindergarten,Learning,476.00,480.00,5,4.00
-Small Group / SPED,Learning,140.00,136.00,4,-4.00
-STEM / Science Lab,Learning,196.00,196.00,2,-0.00
-Art / Maker,Learning,105.00,104.00,1,-1.00
-Music,Learning,98.00,96.00,1,-2.00
-Library / Media,Commons,189.00,190.00,1,1.00
-Cafeteria / Commons,Commons,301.00,300.00,1,-1.00
-Kitchen / Servery,Commons,119.00,120.00,1,1.00
-Gymnasium,Commons,427.00,430.00,1,3.00
-Stage / Assembly,Commons,112.00,110.00,1,-2.00
-Administration,Support,133.00,130.00,1,-3.00
-Health / Counseling,Support,49.00,48.00,1,-1.00
-Staff / Workroom,Support,210.00,210.00,3,0.00
-Toilet Group,Support,266.00,264.00,6,-2.00
-Storage / Support,Support,112.00,152.00,4,40.00
-Mech / Electrical,Support,56.00,56.00,1,0.00
-Vertical Core,Circulation,525.00,522.00,9,-3.00
-Entry / Lobby,Circulation,119.00,120.00,1,1.00
-Outdoor Learning,Outdoor,133.00,130.00,1,-3.00
+Type,Department,No.,Target sf,Placed sf,Variance sf
+General Classroom,Learning,26,23100,23400,300
+Kindergarten,Learning,4,4830,4800,-30
+Small Group / SPED,Learning,4,1610,1600,-10
+STEM / Science Lab,Learning,2,2030,2000,-30
+Art / Maker,Learning,1,1190,1200,10
+Music,Learning,1,1190,1200,10
+Library / Media,Commons,1,2380,2400,20
+Cafeteria / Commons,Commons,1,3010,3000,-10
+Kitchen / Servery,Commons,1,1470,1500,30
+Gymnasium,Commons,1,4970,5000,30
+Stage / Assembly,Commons,1,1190,1200,10
+Administration,Support,1,1820,1800,-20
+Health / Counseling,Support,1,630,600,-30
+Staff / Workroom,Support,3,2730,2700,-30
+Toilet Group,Support,6,3010,3000,-10
+Storage / Support,Support,4,1610,1600,-10
+Mech / Electrical,Support,1,770,800,30
+Vertical Core,Circulation,9,6720,6750,30
+Entry / Lobby,Circulation,1,1610,1600,-10
+Outdoor Learning,Outdoor,1,0,1600,1600
 
-Totals,GFA,9320.68,Net,5440.00,Net:gross,58.36%,m2/student,13.32
+Totals,GSF,107700,Net,66150,Net:gross,61.4%,gsf/student,154,Capacity,720
