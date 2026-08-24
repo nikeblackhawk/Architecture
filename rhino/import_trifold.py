@@ -1,13 +1,13 @@
 """
-Trifold -> Rhino importer  (schema trifold.school.v2.1)
+Trifold -> Rhino importer  (schema trifold.school.v3.0)
 ========================================================
 Run inside Rhino:  _-RunPythonScript  and pick this file.
 
 Builds, on a named layer tree:
     Trifold::L0::Exterior Wall      the plate outline at true elevation and rotation — a
-                                    rectilinear polyline that steps locally where a room
-                                    has pushed or pulled an edge, not always a rectangle
-    Trifold::L0::Courtyard          the courtyard rectangle
+                                    polyline tracing the teardrop curve, stepped locally
+                                    where a room has pushed or pulled the boundary
+    Trifold::L0::Courtyard          the triangular courtyard outline
     Trifold::L0::Plate              planar surface, courtyard trimmed out
     Trifold::L0::Rooms::<TYPE>      one closed rectangle per room, coloured by program
     Trifold::L0::Labels             a text dot per room with name and area
@@ -41,7 +41,7 @@ def layer(full, colour=None):
     return full
 
 
-def rect(points, z, lay, name=None):
+def poly(points, z, lay, name=None):
     pts = [(p[0], p[1], z) for p in points]
     if pts[0] != pts[-1]:
         pts.append(pts[0])
@@ -67,11 +67,11 @@ def main():
         tag = "%s::L%d" % (ROOT, f["index"])
         layer(tag)
 
-        outer = rect(f["world"]["plate"], z, layer(tag + "::Exterior Wall", (255, 255, 255)),
+        outer = poly(f["world"]["plate"], z, layer(tag + "::Exterior Wall", (255, 255, 255)),
                      "L%d plate" % f["index"])
         border = [outer]
         if f["world"]["courtyard"]:
-            border.append(rect(f["world"]["courtyard"], z,
+            border.append(poly(f["world"]["courtyard"], z,
                                layer(tag + "::Courtyard", (110, 200, 180)), "L%d courtyard" % f["index"]))
 
         srf = rs.AddPlanarSrf(border)
@@ -81,7 +81,7 @@ def main():
         labels = layer(tag + "::Labels", (170, 190, 210))
         for r in f["rooms"]:
             lay = layer("%s::Rooms::%s" % (tag, r["type"].upper()), hexcolour(r["colour"]))
-            rect(r["cornersWorld"], z, lay, r["name"])
+            poly(r["cornersWorld"], z, lay, r["name"])
             x, y, rz = r["centreWorld"]
             dot = rs.AddTextDot("%s\n%s sf  %.0f x %.0f" % (r["name"], r["area"], r["length"], r["width"]),
                                 (x, y, rz))

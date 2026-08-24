@@ -1,5 +1,5 @@
 """
-Trifold -> Grasshopper reader  (schema trifold.school.v2)
+Trifold -> Grasshopper reader  (schema trifold.school.v3)
 =========================================================
 Paste into a GhPython component (Rhino 7 / Rhino 8).
 
@@ -10,9 +10,10 @@ Component inputs
 
 Component outputs
     plate     exterior wall outline per floor, at true elevation and rotation — a closed
-              rectilinear polyline (a plain rectangle only where no room pushed or pulled
-              an edge; otherwise it steps locally, in and out, to match the program)
-    court     courtyard rectangle per floor (empty when there is no courtyard)
+              polyline tracing the plate's teardrop curve (its base bulb-and-nose shape
+              only where no room pushed or pulled the boundary; otherwise it steps
+              locally, in and out, to match the program)
+    court     triangular courtyard outline per floor (empty when there is no courtyard)
     slabPlan  planar surface of each plate with the courtyard trimmed out
     rooms     one closed rectangle per room, at its floor's elevation
     names     room names, parallel to `rooms`
@@ -47,8 +48,9 @@ rooms, names, areas, types, colours = [], [], [], [], []
 walls, slabs = [], []
 
 
-def _rect(points, z):
-    """A closed NURBS curve through the four exported corners."""
+def _poly(points, z):
+    """A closed NURBS curve through the exported outline points — any point count, so it
+    reads the teardrop plate and triangular courtyard the same way it reads a room rectangle."""
     pl = rg.Polyline([rg.Point3d(p[0], p[1], z) for p in points])
     if pl[0].DistanceTo(pl[len(pl) - 1]) > 1e-9:
         pl.Add(pl[0])
@@ -65,12 +67,12 @@ for f in data["floors"]:
         continue
 
     z = f["elevation"]
-    outer = _rect(f["world"]["plate"], z)
+    outer = _poly(f["world"]["plate"], z)
     plate.append(outer)
 
     inner = None
     if f["world"]["courtyard"]:
-        inner = _rect(f["world"]["courtyard"], z)
+        inner = _poly(f["world"]["courtyard"], z)
         court.append(inner)
 
     faces = rg.Brep.CreatePlanarBreps([c for c in (outer, inner) if c])
@@ -86,7 +88,7 @@ for f in data["floors"]:
                          or face)
 
     for r in f["rooms"]:
-        rooms.append(_rect(r["cornersWorld"], z))
+        rooms.append(_poly(r["cornersWorld"], z))
         names.append(r["name"])
         areas.append(r["area"])
         types.append(r["type"])

@@ -305,7 +305,7 @@ table.mt td.r{text-align:right}
         <div class="row"><label>Axon explode</label><span class="val" id="vExp">×5.5</span></div>
         <input type="range" id="pExp" min="1" max="14" step="0.1" value="5.5">
         <button class="btn sm" id="btnSiteCores" style="width:100%;margin-top:8px">Site cores in the shared zone</button>
-        <p class="hint">Every level is the same rectangle, rotated. The shaded field is the footprint
+        <p class="hint">Every level is the same plate, rotated. The shaded field is the footprint
         common to all three — the only place a stair, lift or riser runs straight up.</p>
       </div>
     </section>
@@ -330,14 +330,17 @@ table.mt td.r{text-align:right}
         </div>
         <div class="edgegrid" id="edgeReadout"></div>
         <div class="row" style="margin-top:10px"><label>Wall builds out</label><input type="checkbox" id="pBuild" checked style="flex:none"></div>
-        <div class="row"><label>Max build-out / edge</label><span class="val" id="vFlex">40 ft</span></div>
+        <div class="row"><label>Max build-out</label><span class="val" id="vFlex">40 ft</span></div>
         <input type="range" id="pFlex" min="0" max="80" step="1" value="40">
         <div class="row"><label>Courtyard min</label><span class="val" id="vCmin">60%</span></div>
         <input type="range" id="pCmin" min="20" max="100" step="5" value="60">
         <div class="row"><label>Wall thickness</label><span class="val" id="vWt">12 in</span></div>
         <input type="range" id="pWt" min="4" max="36" step="1" value="12">
-        <p class="hint">A room pressing past an edge pushes that whole edge out, so the plate stays a
-        rectangle and the dimensions stay buildable. Nothing you have placed ever moves.</p>
+        <p class="hint">The plate is a rounded, tapered outline — a bulb pulling into a built nose,
+        like the sketch — with a triangular courtyard. A room pressing past the curve bulges just
+        that stretch of wall outward; pulling back lets it recede. Max build-out limits how far
+        either can go; Courtyard min limits how far a room can shrink the courtyard. Nothing you
+        have placed ever moves on its own.</p>
       </div>
     </section>
 
@@ -379,7 +382,7 @@ table.mt td.r{text-align:right}
         <input type="range" id="pMod" min="1" max="20" step="1" value="5">
         <div class="row"><label>Snap to module</label><input type="checkbox" id="pSnap" checked style="flex:none"></div>
         <div class="row"><label>Show grid</label><input type="checkbox" id="pShowGrid" checked style="flex:none"></div>
-        <div class="row"><label>Rooms as blocks</label><input type="checkbox" id="pBlocks" checked style="flex:none"></div>
+        <div class="row"><label>Rooms as blocks</label><input type="checkbox" id="pBlocks" style="flex:none"></div>
         <div class="row"><label>Ghost other floors</label><input type="checkbox" id="pGhost" checked style="flex:none"></div>
         <div class="row"><label>Show shared core zone</label><input type="checkbox" id="pCommon" checked style="flex:none"></div>
         <div class="row"><label>Show dimensions</label><input type="checkbox" id="pDims" checked style="flex:none"></div>
@@ -568,19 +571,18 @@ function overlapRect(a,b){
 }
 const inRect=(x,y,r)=>x>=r.x0&&x<=r.x1&&y>=r.y0&&y<=r.y1;
 const rectPts=r=>[{x:r.x0,y:r.y0},{x:r.x1,y:r.y0},{x:r.x1,y:r.y1},{x:r.x0,y:r.y1}];
-function insetRect(r,d){ return {x0:r.x0+d, y0:r.y0+d, x1:r.x1-d, y1:r.y1-d}; }
 
 /* ---------------------------------------------------------------- 3. state --------- */
 const S = {
   view:'plan', units:'ft',
-  W:220, D:180,                       // base plate, ft
-  cW:80, cD:60, cX:0, cY:0,           // courtyard size and offset from plate centre
+  W:195, D:250,                       // base plate bounding box, ft — teardrop: bulb width × overall height
+  cW:70, cD:95, cX:0, cY:8,           // courtyard (triangle) size and offset from plate centre
   wallT:1.0,                          // ft
   grid:20, module:5, snap:true, showGrid:true,
   buildOut:true, flex:40, courtMin:0.60,
   rotStep:40, ftf:14, explode:5.5, rotCtr:'court', courtRotates:true,
   students:700, classSize:24, targetEff:65, travelLimit:250,
-  blocks:true, ghost:true, common:true, dims:true, flagOv:true,
+  blocks:false, ghost:true, common:true, dims:true, flagOv:true,
   activeFloor:0, sel:[], lastType:'classroom',
   floors:[], cam:{x:0,y:0,z:2}, uid:1
 };
@@ -605,13 +607,112 @@ function courtBox(f){
   const c=baseCourt();
   return {x0:c.x0+f.ins.w, y0:c.y0+f.ins.s, x1:c.x1-f.ins.e, y1:c.y1-f.ins.n};
 }
-/* the exterior wall is a rectilinear outline: each edge is a skyline of whatever rooms
-   press against or pull back from it, so a bulge — or a retreat — stays local to the
-   room that caused it, instead of dragging the whole edge along with it.               */
-function flatWallProfile(){
-  const b=baseRect();
-  return { n:[{lo:b.x0,hi:b.x1,off:0}], s:[{lo:b.x0,hi:b.x1,off:0}],
-           e:[{lo:b.y0,hi:b.y1,off:0}], w:[{lo:b.y0,hi:b.y1,off:0}] };
+/* the exterior wall is a closed radial skyline: at every angle around the plate's own
+   centre, the wall sits wherever the outward-most room reaches — bulging out to meet a
+   room that presses past the base curve, and pulling back in wherever nothing holds it
+   out, down to the limit you set. A bulge (or a retreat) stays local to the stretch of
+   wall that caused it; nothing elsewhere on the curve moves.                            */
+function convexHull(pts){
+  const p=pts.slice().sort((a,b)=>a.x-b.x||a.y-b.y);
+  const cross=(o,a,b)=>(a.x-o.x)*(b.y-o.y)-(a.y-o.y)*(b.x-o.x);
+  const lower=[];
+  for(const pt of p){ while(lower.length>=2 && cross(lower[lower.length-2],lower[lower.length-1],pt)<=0) lower.pop(); lower.push(pt); }
+  const upper=[];
+  for(let i=p.length-1;i>=0;i--){ const pt=p[i]; while(upper.length>=2 && cross(upper[upper.length-2],upper[upper.length-1],pt)<=0) upper.pop(); upper.push(pt); }
+  lower.pop(); upper.pop();
+  return lower.concat(upper);
+}
+/* the base plate, undrawn on by any room: a rounded bulb — its width the plate width —
+   tapering on two straight sides to a small built nose at the top. Convex hull of a
+   sampled circle plus the two nose corners, so it can never self-intersect.             */
+function baseTeardropPts(){
+  const Rb=Math.min(S.W/2, S.D*0.44), cx=0, cy=-S.D/2+Rb, apexY=S.D/2;
+  const noseW=clamp(Rb*0.22,3,16), lean=Rb*0.10;
+  const N=56, pts=[];
+  for(let i=0;i<N;i++){ const a=TAU*i/N; pts.push({x:cx+Rb*Math.cos(a), y:cy+Rb*Math.sin(a)}); }
+  pts.push({x:lean-noseW/2,y:apexY}, {x:lean+noseW/2,y:apexY});
+  return convexHull(pts);
+}
+function plateCentroid(){
+  const p=baseTeardropPts(); let sx=0,sy=0; p.forEach(q=>{sx+=q.x;sy+=q.y;});
+  return {x:sx/p.length, y:sy/p.length};
+}
+function rayHit(px,py,dx,dy,a,b){
+  const ex=b.x-a.x, ey=b.y-a.y, det=ex*dy-ey*dx;
+  if(Math.abs(det)<1e-9) return null;
+  const apx=a.x-px, apy=a.y-py;
+  const t=(ex*apy-ey*apx)/det, u=(dx*apy-dy*apx)/det;
+  return (u<0||u>1||t<0) ? null : t;
+}
+function baseRadiusAt(theta,pole,poly){
+  const dx=Math.cos(theta), dy=Math.sin(theta);
+  let best=Infinity;
+  for(let i=0;i<poly.length;i++){
+    const t=rayHit(pole.x,pole.y,dx,dy,poly[i],poly[(i+1)%poly.length]);
+    if(t!==null && t<best) best=t;
+  }
+  return isFinite(best)?best:0;
+}
+function angOverlap(lo,hi,alo,ahi){
+  for(const d of [-TAU,0,TAU]) if(alo+d<hi-1e-9 && ahi+d>lo+1e-9) return true;
+  return false;
+}
+/* the same bipolar skyline as a straight edge used, wrapped around a full turn instead:
+   for each angular bin, the offset of whichever room's face reaches furthest outward
+   there — negative where every room nearby is set back, zero where nothing claims that
+   stretch at all.                                                                       */
+function polarSkyline(rooms,pole,base){
+  const items=[];
+  rooms.forEach(r=>{
+    if(r.type==='outdoor') return;
+    const ca=Math.atan2(r.y-pole.y,r.x-pole.x);
+    let lo=Infinity,hi=-Infinity,val=0;
+    rectPts(roomRect(r)).forEach(c=>{
+      let a=Math.atan2(c.y-pole.y,c.x-pole.x), da=a-ca;
+      while(da>Math.PI)da-=TAU; while(da<-Math.PI)da+=TAU; a=ca+da;
+      if(a<lo)lo=a; if(a>hi)hi=a;
+      val=Math.max(val,dist(pole.x,pole.y,c.x,c.y));
+    });
+    if(hi-lo>Math.PI){ lo=-Math.PI; hi=Math.PI; }
+    items.push({lo:lo,hi:hi,val:val});
+  });
+  const avgR=base.reduce((s,p)=>s+dist(pole.x,pole.y,p.x,p.y),0)/base.length;
+  const M=clamp(Math.round(TAU*avgR/Math.max(S.grid,8)*2),32,160);
+  const segs=[];
+  for(let i=0;i<M;i++){
+    const loA=-Math.PI+TAU*i/M, hiA=-Math.PI+TAU*(i+1)/M;
+    const r0lo=baseRadiusAt(loA,pole,base), r0hi=baseRadiusAt(hiA,pole,base);
+    // the offset is evaluated separately at each of the bin's own two rays — not at the
+    // bin's midpoint — so a room's own corner, sitting exactly on one of those rays, can
+    // never end up cut off by a base radius that happened to be smaller at the midpoint.
+    let needLo=-Infinity, needHi=-Infinity;
+    items.forEach(it=>{
+      if(!angOverlap(loA,hiA,it.lo,it.hi)) return;
+      if(it.val-r0lo>needLo) needLo=it.val-r0lo;
+      if(it.val-r0hi>needHi) needHi=it.val-r0hi;
+    });
+    if(needLo===-Infinity) needLo=0; if(needHi===-Infinity) needHi=0;
+    needLo = S.buildOut?clamp(needLo,-S.flex,S.flex):0;
+    needHi = S.buildOut?clamp(needHi,-S.flex,S.flex):0;
+    segs.push({loA:loA,hiA:hiA, r0lo:r0lo,r0hi:r0hi, offLo:needLo,offHi:needHi});
+  }
+  return segs;
+}
+function computeWallProfile(f){
+  const pole=plateCentroid(), base=baseTeardropPts();
+  return {pole:pole, base:base, segs:polarSkyline(f.rooms,pole,base)};
+}
+function flatWallProfile(){ return computeWallProfile({rooms:[]}); }
+function peakOffset(segs){
+  let best=0; segs.forEach(sg=>{
+    if(Math.abs(sg.offLo)>Math.abs(best)) best=sg.offLo;
+    if(Math.abs(sg.offHi)>Math.abs(best)) best=sg.offHi;
+  });
+  return best;
+}
+function offsetAtAngle(theta,segs){
+  for(const sg of segs) if(theta>=sg.loA-1e-9 && theta<=sg.hiA+1e-9) return (sg.offLo+sg.offHi)/2;
+  return 0;
 }
 function newFloor(i){
   return { id:i,
@@ -622,65 +723,19 @@ function floorOf(r){ for(const f of S.floors) if(f.rooms.indexOf(r)>=0) return f
 const roomRect = r=>({x0:r.x-r.L/2, y0:r.y-r.W/2, x1:r.x+r.L/2, y1:r.y+r.W/2});
 const roomArea = r=>r.L*r.W;
 
-/* a bipolar 1D skyline: for each stretch of the edge, the offset of whichever room's
-   face reaches furthest outward there — negative where every room nearby is set back,
-   zero where nothing claims that stretch at all.                                      */
-function edgeSkyline(rooms, base0, base1, project){
-  const items=[];
-  rooms.forEach(r=>{
-    if(r.type==='outdoor') return;
-    const pr=project(r); if(!pr) return;
-    if(pr.hi-pr.lo<=1e-6) return;
-    items.push(pr);
-  });
-  // bin at the structural grid, not at exact room corners — a real wall steps at column
-  // lines, and coarse bins keep the outline a simple, buildable staircase instead of a
-  // comb of hair's-width slivers wherever two rooms' edges happen to fall a foot apart.
-  const binW=Math.max(S.grid,8), n=Math.max(1,Math.round((base1-base0)/binW)), w=(base1-base0)/n;
-  const segs=[];
-  for(let i=0;i<n;i++){
-    const lo=base0+i*w, hi=base0+(i+1)*w;
-    let off=-Infinity;
-    items.forEach(it=>{ if(it.lo<hi-1e-6 && it.hi>lo+1e-6 && it.val>off) off=it.val; });
-    if(off===-Infinity) off=0;
-    segs.push({lo:lo, hi:hi, off:S.buildOut?clamp(off,-S.flex,S.flex):0});
-  }
-  return segs;
-}
-function computeWallProfile(f){
-  const b=baseRect();
-  return {
-    n: edgeSkyline(f.rooms,b.x0,b.x1, r=>{const q=roomRect(r); return {lo:q.x0,hi:q.x1,val:q.y1-b.y1};}),
-    s: edgeSkyline(f.rooms,b.x0,b.x1, r=>{const q=roomRect(r); return {lo:q.x0,hi:q.x1,val:b.y0-q.y0};}),
-    e: edgeSkyline(f.rooms,b.y0,b.y1, r=>{const q=roomRect(r); return {lo:q.y0,hi:q.y1,val:q.x1-b.x1};}),
-    w: edgeSkyline(f.rooms,b.y0,b.y1, r=>{const q=roomRect(r); return {lo:q.y0,hi:q.y1,val:b.x0-q.x0};}),
-  };
-}
-function peakOffset(segs){ let best=0; segs.forEach(s=>{ if(Math.abs(s.off)>Math.abs(best)) best=s.off; }); return best; }
-/* the plate outline: four skylines chained corner to corner into one closed polygon.
-   pass an alternate `wall` (e.g. shrunk by the wall thickness) for an inner-face curve. */
+/* the plate outline: the closed radial skyline, walked bin to bin. no corner-stitching
+   needed here — it is one continuous loop around the centre, not four independent edges. */
 function platePoly(f, wall){
-  const w=wall||f.wall, b=baseRect(), pts=[];
-  // a room sitting in a corner can push two edges at once; a straight line between where
-  // one edge's skyline ends and the next begins would cut that corner off diagonally, so
-  // step through an explicit right-angle point instead — free when both edges are at 0
-  // there, and exactly encloses the corner when either of them is not.
-  const lastW=w.w[w.w.length-1].off, firstN=w.n[0].off, lastN=w.n[w.n.length-1].off,
-        lastE=w.e[w.e.length-1].off, firstE=w.e[0].off, lastS=w.s[w.s.length-1].off,
-        firstS=w.s[0].off, firstW=w.w[0].off;
-  w.w.forEach(sg=>{ pts.push({x:b.x0-sg.off,y:sg.lo}); pts.push({x:b.x0-sg.off,y:sg.hi}); });
-  pts.push({x:b.x0-lastW, y:b.y1+firstN});                          // NW
-  w.n.forEach(sg=>{ pts.push({x:sg.lo,y:b.y1+sg.off}); pts.push({x:sg.hi,y:b.y1+sg.off}); });
-  pts.push({x:b.x1+lastE, y:b.y1+lastN});                           // NE
-  w.e.slice().reverse().forEach(sg=>{ pts.push({x:b.x1+sg.off,y:sg.hi}); pts.push({x:b.x1+sg.off,y:sg.lo}); });
-  pts.push({x:b.x1+firstE, y:b.y0-lastS});                          // SE
-  w.s.slice().reverse().forEach(sg=>{ pts.push({x:sg.hi,y:b.y0-sg.off}); pts.push({x:sg.lo,y:b.y0-sg.off}); });
-  pts.push({x:b.x0-firstW, y:b.y0-firstS});                         // SW
+  const w=wall||f.wall, pts=[];
+  w.segs.forEach(sg=>{
+    pts.push({x:w.pole.x+(sg.r0lo+sg.offLo)*Math.cos(sg.loA), y:w.pole.y+(sg.r0lo+sg.offLo)*Math.sin(sg.loA)});
+    pts.push({x:w.pole.x+(sg.r0hi+sg.offHi)*Math.cos(sg.hiA), y:w.pole.y+(sg.r0hi+sg.offHi)*Math.sin(sg.hiA)});
+  });
   return pts;
 }
 function insetWallProfile(f,t){
-  const shrink=segs=>segs.map(s=>({lo:s.lo,hi:s.hi,off:s.off-t}));
-  return {n:shrink(f.wall.n), s:shrink(f.wall.s), e:shrink(f.wall.e), w:shrink(f.wall.w)};
+  return {pole:f.wall.pole, base:f.wall.base,
+          segs:f.wall.segs.map(sg=>({loA:sg.loA,hiA:sg.hiA,r0lo:sg.r0lo,r0hi:sg.r0hi,offLo:sg.offLo-t,offHi:sg.offHi-t}))};
 }
 function plateBBox(f){
   const p=platePoly(f); let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
@@ -712,28 +767,23 @@ function distToPolyBoundary(px,py,poly){
 function updateBoundaries(){
   S.floors.forEach((f,fi)=>{
     f.wall=computeWallProfile(f);
-    f.ext={ n:peakOffset(f.wall.n), e:peakOffset(f.wall.e), s:peakOffset(f.wall.s), w:peakOffset(f.wall.w) };
+    const segs=f.wall.segs;
+    f.ext={ max:peakOffset(segs), n:offsetAtAngle(Math.PI/2,segs), e:offsetAtAngle(0,segs),
+            s:offsetAtAngle(-Math.PI/2,segs), w:offsetAtAngle(Math.PI,segs) };
 
-    // a room lapping the courtyard pushes that edge in, on the side it penetrates least
-    const ins={n:0,e:0,s:0,w:0};
+    // a room lapping the courtyard shrinks it inward, uniformly toward its own minimum —
+    // a triangle has no four independent edges to inset separately the way a rectangle did.
+    let give=0;
     if(S.cW>0&&S.cD>0){
-      const a=courtAngle(fi), ux=Math.cos(a), uy=Math.sin(a), vx=-Math.sin(a), vy=Math.cos(a);
       const cpoly=courtBasePoly(f);
       f.rooms.forEach(r=>{
         if(r.type==='outdoor') return;
         const m=satMTV(rectPts(roomRect(r)), cpoly);
-        if(!m) return;
-        const du=m.dx*ux+m.dy*uy, dv=m.dx*vx+m.dy*vy;      // push, in courtyard axes
-        if(Math.abs(du)>=Math.abs(dv)) { if(du<0) ins.e=Math.max(ins.e,-du); else ins.w=Math.max(ins.w,du); }
-        else                           { if(dv<0) ins.n=Math.max(ins.n,-dv); else ins.s=Math.max(ins.s,dv); }
+        if(m) give=Math.max(give, m.d);
       });
-      const capX=S.cW*(1-S.courtMin), capY=S.cD*(1-S.courtMin);
-      ins.w=clamp(ins.w,0,capX); ins.e=clamp(ins.e,0,capX);
-      ins.s=clamp(ins.s,0,capY); ins.n=clamp(ins.n,0,capY);
-      if(ins.w+ins.e>capX){ const k=capX/(ins.w+ins.e); ins.w*=k; ins.e*=k; }
-      if(ins.s+ins.n>capY){ const k=capY/(ins.s+ins.n); ins.s*=k; ins.n*=k; }
+      give=clamp(give, 0, Math.min(S.cW,S.cD)*(1-S.courtMin)/2);
     }
-    f.ins=ins;
+    f.ins={n:give,e:give,s:give,w:give};
   });
 }
 
@@ -786,7 +836,7 @@ function roomFaults(f,r){
   if(r.type!=='outdoor'){
     const poly=platePoly(f);
     // a corner sitting exactly on the wall (flush, no bulge) must not fault on float noise
-    const ok=rectPts(q).every(pt=>pointInPoly(pt.x,pt.y,poly) || distToPolyBoundary(pt.x,pt.y,poly)<0.1);
+    const ok=rectPts(q).every(pt=>pointInPoly(pt.x,pt.y,poly) || distToPolyBoundary(pt.x,pt.y,poly)<1.0);
     if(!ok) out.push('outside');
   }
   const k=courtKeepOutPoly(f);
@@ -794,12 +844,15 @@ function roomFaults(f,r){
   return out;
 }
 
-/* ---------------------------------------------------------------- 6. oriented rects -
+/* ---------------------------------------------------------------- 6. oriented polys -
    The plate is axis-aligned in its own floor's frame. The courtyard is too, unless you
    hold it fixed while the plates turn — then it arrives rotated. SAT covers both.      */
-function orect(cx,cy,L,W,ang){
-  const c=Math.cos(ang), s=Math.sin(ang), hx=L/2, hy=W/2;
-  return [[-hx,-hy],[hx,-hy],[hx,hy],[-hx,hy]].map(p=>({x:cx+p[0]*c-p[1]*s, y:cy+p[0]*s+p[1]*c}));
+/* the courtyard: a triangle, apex up, base down, leaning slightly — offset from the
+   plate centre and rotated with (or held against) each floor, same as before.          */
+function otri(cx,cy,W,D,ang){
+  const c=Math.cos(ang), s=Math.sin(ang), lean=0.12;
+  const local=[{x:W*lean,y:D/2},{x:-W/2,y:-D/2},{x:W/2,y:-D/2}];
+  return local.map(p=>({x:cx+p.x*c-p.y*s, y:cy+p.x*s+p.y*c}));
 }
 function satMTV(A,B){                        // minimum push that takes A clear of B
   let best=Infinity, bx=0, by=0;
@@ -849,20 +902,20 @@ function courtOR(f){
   const ux=Math.cos(a), uy=Math.sin(a), vx=-Math.sin(a), vy=Math.cos(a);
   cx += ux*(i.w-i.e)/2 + vx*(i.s-i.n)/2;
   cy += uy*(i.w-i.e)/2 + vy*(i.s-i.n)/2;
-  return {cx:cx, cy:cy, L:nL, W:nW, a:a, pts:orect(cx,cy,nL,nW,a)};
+  return {cx:cx, cy:cy, L:nL, W:nW, a:a, pts:otri(cx,cy,nL,nW,a)};
 }
 function courtKeepOutPoly(f){
   const fi=S.floors.indexOf(f), a=courtAngle(fi), c=baseCourt();
   let cx=rcx(c), cy=rcy(c);
   if(!S.courtRotates){ const ctr=rotCenter(); const p=rot(cx,cy,a,ctr.x,ctr.y); cx=p.x; cy=p.y; }
   if(S.cW<=0||S.cD<=0) return null;
-  return orect(cx,cy,S.cW*S.courtMin,S.cD*S.courtMin,a);
+  return otri(cx,cy,S.cW*S.courtMin,S.cD*S.courtMin,a);
 }
 function courtBasePoly(f){
   const fi=S.floors.indexOf(f), a=courtAngle(fi), c=baseCourt();
   let cx=rcx(c), cy=rcy(c);
   if(!S.courtRotates){ const ctr=rotCenter(); const p=rot(cx,cy,a,ctr.x,ctr.y); cx=p.x; cy=p.y; }
-  return orect(cx,cy,S.cW,S.cD,a);
+  return otri(cx,cy,S.cW,S.cD,a);
 }
 
 /* ---------------------------------------------------------------- 7. placement ------
@@ -870,19 +923,27 @@ function courtBasePoly(f){
 function findSpot(f,L,W){
   const m=Math.max(2,S.module), k=(S.cW>0&&S.cD>0)?courtBasePoly(f):null;
   const taken=f.rooms.map(r=>rectPts(roomRect(r)));
-  const B0=baseRect();
-  const scan=(bounds,overflow)=>{
+  const B0=baseRect(), basePoly=f.wall.base;
+  const scan=(bounds,overflow,poly)=>{
     let best=null, bestScore=Infinity;
     for(let x=bounds.x0+L/2; x<=bounds.x1-L/2+0.01; x+=m)
     for(let y=bounds.y0+W/2; y<=bounds.y1-W/2+0.01; y+=m){
       const pts=rectPts({x0:x-L/2,y0:y-W/2,x1:x+L/2,y1:y+W/2});
+      // first pass: fully inside the base curve. second pass: allowed to sit past it,
+      // but only as far as the build-out limit lets a wall actually follow it out.
+      if(poly){
+        const clear=overflow
+          ? pts.every(p=>pointInPoly(p.x,p.y,poly) || distToPolyBoundary(p.x,p.y,poly)<=S.flex)
+          : pts.every(p=>pointInPoly(p.x,p.y,poly));
+        if(!clear) continue;
+      }
       if(k && satMTV(pts,k)) continue;
       let clash=false;
       for(const t of taken){ if(satMTV(pts,t)){ clash=true; break; } }
       if(clash) continue;
       // prefer the perimeter: daylight, and it keeps the middle free for circulation
       let score=Math.min(x-L/2-bounds.x0, bounds.x1-x-L/2, y-W/2-bounds.y0, bounds.y1-y-W/2);
-      if(k){ const kc={x:(k[0].x+k[2].x)/2, y:(k[0].y+k[2].y)/2};
+      if(k){ let kx=0,ky=0; k.forEach(p=>{kx+=p.x;ky+=p.y;}); const kc={x:kx/k.length,y:ky/k.length};
              score=Math.min(score, Math.max(0, dist(x,y,kc.x,kc.y)-Math.max(S.cW,S.cD)/2)); }
       if(overflow){                       // spilling outside: build out as little as possible
         const push=Math.max(0, B0.x0-(x-L/2)) + Math.max(0, (x+L/2)-B0.x1)
@@ -894,7 +955,7 @@ function findSpot(f,L,W){
     return best;
   };
   // inside the plate as drawn first; only then into the build-out zone, which pushes the wall
-  return scan(B0,false) || (S.buildOut ? scan(envelope(),true) : null) || {x:0,y:0};
+  return scan(B0,false,basePoly) || (S.buildOut ? scan(envelope(),true,basePoly) : null) || {x:0,y:0};
 }
 function addRoom(f,typeKey,opts){
   const t=PT[typeKey]||PT.classroom;
@@ -943,23 +1004,33 @@ function seedModel(){
   [['classroom',13],['stem',2],['music',1],['sped',2],['toilets',2],['storage',1],['staff',1]]
     .forEach(([k,n])=>{ for(let i=0;i<n;i++) addRoom(L2,k); });
   addRoom(G,'outdoor',{x:S.cX,y:S.cY});
+  // category order fills a rectangle fine, but a tapered plate packs far more reliably
+  // largest-room-first — the same re-pack tidyFloor uses, run once per floor after seeding.
+  [G,L1,L2].forEach(repackLargestFirst);
   updateBoundaries();
   renumber();
 }
+function repackLargestFirst(f){
+  const movable=f.rooms.filter(r=>!r.lock&&!r.stack&&r.type!=='outdoor')
+                       .sort((a,b)=>roomArea(b)-roomArea(a));
+  const keep=f.rooms.filter(r=>r.lock||r.stack||r.type==='outdoor');
+  f.rooms=keep.slice();
+  movable.forEach(r=>{ const spot=findSpot(f,r.L,r.W); r.x=spot.x; r.y=spot.y; f.rooms.push(r); });
+  f.rooms.forEach(r=>{ snapRoom(r); constrainRoom(r,f); });
+}
 /* ---- cores: sited in the footprint common to all three rotations ---- */
 function sharedZoneSites(margin){
-  const b=baseRect(), step=Math.max(4,S.module), ctr=rotCenter(), out=[];
+  const b=baseRect(), step=Math.max(4,S.module), ctr=rotCenter(), out=[], base=baseTeardropPts();
   const boxes=S.floors.map((f,fi)=>{
     const a=courtAngle(fi), cb=baseCourt(); let cx=rcx(cb), cy=rcy(cb);
     if(!S.courtRotates){ const c2=rotCenter(); const q=rot(cx,cy,a,c2.x,c2.y); cx=q.x; cy=q.y; }
-    return {box:insetRect(baseRect(),margin),
-            court:(S.cW>0&&S.cD>0)?orect(cx,cy,S.cW+margin*2,S.cD+margin*2,a):null, fi:fi};
+    return {court:(S.cW>0&&S.cD>0)?otri(cx,cy,S.cW+margin*2,S.cD+margin*2,a):null, fi:fi};
   });
   for(let x=b.x0;x<=b.x1;x+=step) for(let y=b.y0;y<=b.y1;y+=step){
     let ok=true;
     for(const B of boxes){
       const p=rot(x,y,-floorAngle(B.fi),ctr.x,ctr.y);
-      if(!inRect(p.x,p.y,B.box)){ ok=false; break; }
+      if(!pointInPoly(p.x,p.y,base) || distToPolyBoundary(p.x,p.y,base)<margin){ ok=false; break; }
       if(B.court && satMTV([{x:p.x,y:p.y},{x:p.x+.01,y:p.y},{x:p.x,y:p.y+.01}], B.court)){ ok=false; break; }
     }
     if(ok) out.push({x:x,y:y});
@@ -1094,7 +1165,7 @@ function computeMetrics(){
       }
       if(best!==Infinity && best>worst){ worst=best; worstName=r.name; }
     });
-    const built=Math.max(Math.abs(f.ext.n),Math.abs(f.ext.e),Math.abs(f.ext.s),Math.abs(f.ext.w));
+    const built=Math.abs(f.ext.max);
     return { i:fi, name:f.name, gross:gross, net:net, outdoor:outdoor, circ:gross-net,
       eff:gross>0?net/gross:0, occ:occ, rooms:f.rooms.length, classes:cls, cores:cores,
       toilets:toilets, faults:faults, overlap:ovl, overlapPct:net>0?ovl/net:0,
@@ -1246,7 +1317,7 @@ const ftTxt=v=>{ const f=Math.floor(Math.abs(v)), i=Math.round((Math.abs(v)-f)*1
 /* -------- plan --------------------------------------------------------------- */
 function drawPlan(){
   const f=S.floors[S.activeFloor], fi=S.activeFloor, relBase=-floorAngle(fi);
-  const P=platePoly(f), Pbb=plateBBox(f), B=baseRect(), C=courtOR(f), CB=courtBasePoly(f);
+  const P=platePoly(f), Pbb=plateBBox(f), C=courtOR(f), CB=courtBasePoly(f);
   if(S.showGrid) drawGrid(Pbb);
 
   if(S.ghost) S.floors.forEach((g,gi)=>{
@@ -1269,7 +1340,7 @@ function drawPlan(){
   if(S.common) drawSharedZone(fi,P);
   // base outline (before any room pushed or pulled an edge)
   ctx.save(); ctx.setLineDash([3,4]); ctx.lineWidth=1; ctx.strokeStyle='rgba(250,249,247,.35)';
-  tracePoly(rectPts(B)); ctx.stroke();
+  tracePoly(f.wall.base); ctx.stroke();
   if(S.cW>0){ tracePoly(CB); ctx.stroke(); }
   ctx.restore();
 
@@ -1301,21 +1372,19 @@ function drawPlan(){
   if(S.dims) drawPlanDims(f,Pbb);
   drawNorth(relBase); drawScaleBar();
 }
-/* stroke each edge's skyline segment in its own colour: amber where a room has pushed the
-   wall out, blue where the wall has pulled in to follow a room that stepped back.       */
+/* stroke each stretch of the radial skyline in its own colour: amber where a room has
+   pushed the wall out, blue where the wall has pulled in to follow a room that stepped
+   back — untouched stretches are skipped, since the base stroke already covers them.    */
 function drawWallSegments(f){
-  const b=baseRect();
-  const seg=(x1,y1,x2,y2,off)=>{
-    const a=w2s(x1,y1), c=w2s(x2,y2);
-    if(Math.abs(off)<=0.05) return;                  // untouched — the base stroke already covers it
+  const w=f.wall;
+  w.segs.forEach(sg=>{
+    if(Math.abs(sg.offLo)<=0.05 && Math.abs(sg.offHi)<=0.05) return;
+    const a=w2s(w.pole.x+(sg.r0lo+sg.offLo)*Math.cos(sg.loA), w.pole.y+(sg.r0lo+sg.offLo)*Math.sin(sg.loA));
+    const c=w2s(w.pole.x+(sg.r0hi+sg.offHi)*Math.cos(sg.hiA), w.pole.y+(sg.r0hi+sg.offHi)*Math.sin(sg.hiA));
     ctx.lineWidth=Math.max(3,S.wallT*S.cam.z+2);
-    ctx.strokeStyle = off>0 ? '#FFC300' : '#6E9BC4';
+    ctx.strokeStyle = (sg.offLo+sg.offHi)>0 ? '#FFC300' : '#6E9BC4';
     ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(c.x,c.y); ctx.stroke();
-  };
-  f.wall.n.forEach(sg=>seg(sg.lo,b.y1+sg.off, sg.hi,b.y1+sg.off, sg.off));
-  f.wall.s.forEach(sg=>seg(sg.lo,b.y0-sg.off, sg.hi,b.y0-sg.off, sg.off));
-  f.wall.e.forEach(sg=>seg(b.x1+sg.off,sg.lo, b.x1+sg.off,sg.hi, sg.off));
-  f.wall.w.forEach(sg=>seg(b.x0-sg.off,sg.lo, b.x0-sg.off,sg.hi, sg.off));
+  });
 }
 /* the footprint common to all three rotations, from the same point sample used for its
    area (M.commonZone) — plates are no longer guaranteed convex, so this is a scatter
@@ -1790,18 +1859,12 @@ function stackSel(){
 }
 function tidyFloor(){
   pushUndo();
-  const f=activeF();
-  const movable=f.rooms.filter(r=>!r.lock&&!r.stack&&r.type!=='outdoor')
-                       .sort((a,b)=>roomArea(b)-roomArea(a));
-  const keep=f.rooms.filter(r=>r.lock||r.stack||r.type==='outdoor');
-  f.rooms=keep.slice();
-  movable.forEach(r=>{ const spot=findSpot(f,r.L,r.W); r.x=spot.x; r.y=spot.y; f.rooms.push(r); });
-  f.rooms.forEach(r=>{ snapRoom(r); constrainRoom(r,f); });
+  repackLargestFirst(activeF());
   save(); paintAll(); invalidate(); toast('Floor re-packed, largest first');
 }
 
 /* ---------------------------------------------------------------- 12. undo / save -- */
-const UNDO=[], REDO=[], LS_KEY='trifold.v2';
+const UNDO=[], REDO=[], LS_KEY='trifold.v3';
 const snap=()=>JSON.stringify({floors:S.floors.map(f=>({name:f.name,visible:f.visible,rooms:f.rooms})),
                                uid:S.uid, sel:S.sel});
 function restore(str){
@@ -2046,7 +2109,7 @@ function paintLegend(){
     `<div class="lg"><span class="lgk" style="border-color:#FFC300"></span>wall pushed out (local)</div>`+
     `<div class="lg"><span class="lgk" style="border-color:#6E9BC4"></span>wall pulled in (local)</div>`+
     `<div class="lg"><span class="lgk" style="border-color:#c58bff"></span>courtyard given way</div>`+
-    `<div class="lg"><span class="lgk" style="border-color:rgba(250,249,247,.5);border-top-style:dashed"></span>base rectangle</div>`+
+    `<div class="lg"><span class="lgk" style="border-color:rgba(250,249,247,.5);border-top-style:dashed"></span>base plate</div>`+
     `<div class="lg"><span class="lgk" style="border-color:rgba(176,138,62,.6);border-top-style:dashed"></span>floor below · <span style="color:#8A8378">above</span></div>`+
     `<div class="lg"><span style="width:11px;height:11px;background:rgba(255,90,90,.4);border:1px solid #ff7b7b;flex:none"></span>rooms overlapping</div>`+
     (S.common?zone:'');
@@ -2064,11 +2127,11 @@ function buildExport(){
   const k=EXPORT_SCALE[S.units], k2=k*k, ctr=rotCenter();
   const P=(p,z)=>[+(p.x*k).toFixed(4), +(p.y*k).toFixed(4)].concat(z===undefined?[]:[+(z*k).toFixed(4)]);
   return {
-    schema:'trifold.school.v2.1', generated:new Date().toISOString(), units:S.units,
+    schema:'trifold.school.v3.0', generated:new Date().toISOString(), units:S.units,
     source:'Trifold — rotating-plate school programming studio',
     parameters:{
-      plateWidth:S.W*k, plateDepth:S.D*k,
-      courtyardWidth:S.cW*k, courtyardDepth:S.cD*k, courtyardOffset:[S.cX*k,S.cY*k],
+      plateShape:'teardrop', plateWidth:S.W*k, plateDepth:S.D*k,
+      courtyardShape:'triangle', courtyardWidth:S.cW*k, courtyardDepth:S.cD*k, courtyardOffset:[S.cX*k,S.cY*k],
       wallThickness:S.wallT*k, structuralGrid:S.grid*k, planningModule:S.module*k,
       rotationStepDeg:S.rotStep, floorToFloor:S.ftf*k,
       rotationCentre:P(ctr), rotationCentreMode:S.rotCtr, courtyardRotates:S.courtRotates,
@@ -2076,8 +2139,8 @@ function buildExport(){
       students:S.students, classSize:S.classSize, targetNetToGross:S.targetEff/100,
       travelLimit:S.travelLimit*k
     },
-    basePlate:{ rectangle:rectPts(baseRect()).map(p=>P(p)),
-                courtyard:S.cW>0?rectPts(baseCourt()).map(p=>P(p)):[] },
+    basePlate:{ outline:baseTeardropPts().map(p=>P(p)),
+                courtyard:S.cW>0?otri(S.cX,S.cY,S.cW,S.cD,0).map(p=>P(p)):[] },
     floors:S.floors.map((f,fi)=>{
       const z=fi*S.ftf, a=floorAngle(fi), m=M.floors[fi];
       const plate=platePoly(f), court=courtOR(f).pts, pbb=plateBBox(f);
